@@ -1,0 +1,14 @@
+As a next step, we'd like to ask you to do a short coding challenge. Hopefully, it’s a pretty enjoyable exercise. You’ll find all the details in the attached zip file.
+
+Two things we care about:
+
+Simplicity. Clear code that's easy to reason about.
+Speed. We'll benchmark simulation latency (time after map loads). Make it fast!
+Some notes:
+
+Show your work. We want to see your journey through coding → analysis → reasoning → iteration. A fast solution with no explanation of how you got there is less valuable to us than a slower solution with clear profiling and analysis.
+Rust preferred but not required. We've hired many people with no Rust experience. Any systems language is fine.
+3-4 hours is the rough guideline for time spent.
+The task is open-ended in places. Make assumptions where needed, just note anything important.
+Be ready to defend all design decisions and optimisations. If you pass, the next interview will go deep on why you made the choices you did.
+Please upload your solution to a private GitHub repository and invite vladimir_ea and gd-0. Please hand in your solution within 2 weeks of this email. If something comes up and this is not possible, that's totally fine, just give us a heads up.
