@@ -7,6 +7,35 @@
 #include <ranges>
 #include <string_view>
 #include <random>
+#include <chrono>
+
+#ifndef LOG_ON
+#define LOG_ON false
+#endif
+
+template <typename... Args>
+void log_internal(const char* file, int line, Args&&... args) {
+    std::cout << "[" << file << ":" << line << "] ";
+
+    ((std::cout << std::forward<Args>(args) << " "), ...);
+
+    std::cout << std::endl;
+}
+
+template <typename... Args>
+void log_internal_clean(Args&&... args) {
+    ((std::cout << std::forward<Args>(args) << " "), ...);
+
+    std::cout << std::endl;
+}
+
+#if defined(LOG_ON) && LOG_ON
+#define CUSTOM_LOG(...) log_internal_clean(__VA_ARGS__)
+#define CUSTOM_LOG_ENDL std::cout << std::endl;
+#else
+#define CUSTOM_LOG(...)
+#define CUSTOM_LOG_ENDL
+#endif
 
 struct Node
 {
@@ -64,16 +93,16 @@ bool readColonyMap(const std::string& colonyMapFileName, Graph& colonyMap)
         std::string curColonyName = std::ranges::to<std::string>(*subRangesIt);
         colonyMap.htNodes[curColonyName] = new Node(curColonyName);
         htDirColony[curColonyName] = {};
-        std::print(std::cout, "CUR COLONY NAME {}", curColonyName);
+        CUSTOM_LOG("CUR COLONY NAME", curColonyName);
 
         subRangesIt ++;
         for (; subRangesIt != splitRange.end(); subRangesIt++)
         {
             auto splitString = std::ranges::to<std::string>(*subRangesIt);
-            std::print(std::cout, " NAME {}", splitString);
+            CUSTOM_LOG("NAME ", splitString);
             htDirColony[curColonyName].push_back(splitDirAndColonyName(splitString));
         }
-        std::println(std::cout, "");
+        CUSTOM_LOG_ENDL;
     }
 
     for (auto& [curColonyName, vAdjDirColonyNames]: htDirColony)
@@ -155,14 +184,15 @@ void collisionHandler(Graph& colonyMap, ColoniesState& coloniesState)
         if (ants.size() > 1)
         {
             colonyMap.htNodes[colonyName]->colonyAlive = false;
-            std::cout << "FIGHTING DESTRUCTION: ";
+            CUSTOM_LOG("FIGHTING DESTRUCTION: ");
             for (auto antId: ants)
             {
                 coloniesState.vAnts[antId].alive = false;
-                std::cout << antId << ";";
+                CUSTOM_LOG(antId, ";");
             }
-            std::cout << std::endl;
-            std::cout << "COLONY " << colonyName << " DESTROYED" << std::endl;
+            CUSTOM_LOG_ENDL;
+            CUSTOM_LOG("COLONY ", colonyName, " DESTROYED");
+            CUSTOM_LOG_ENDL;
             coloniesState.aliveAnts -= ants.size();
         }
     }
@@ -186,14 +216,16 @@ void antsMove(Graph& colonyMap, ColoniesState& coloniesState, RandomGenerator& r
         }
         if (vPotentialColonies.empty())
         {
-            std::cout << ant.id << " ISOLATED " << ant.colonyName << std::endl;
+            CUSTOM_LOG(ant.id, " ISOLATED ", ant.colonyName);
+            CUSTOM_LOG_ENDL
             continue;
         }
         int nextColonyIdx = randomGenerator.generateDir(vPotentialColonies.size());
         std::string prevColony = ant.colonyName;
         ant.colonyName = vPotentialColonies[nextColonyIdx];
-        std::cout << ant.id << " MOVED FROM " << prevColony << " TO " << ant.colonyName << std::endl;
+        CUSTOM_LOG(ant.id, " MOVED FROM ", prevColony, " TO ", ant.colonyName);
     }
+    CUSTOM_LOG_ENDL;
 }
 
 bool parseArguments(int argc, char* argv[],
@@ -236,16 +268,24 @@ int main(int argc, char* argv[])
     readColonyMap(colonyFileName, colonyMap);
     initializeAnts(colonyMap, coloniesState, seed);
 
+    auto start = std::chrono::high_resolution_clock::now();
     for (int step = 0; step < NUM_STEPS && coloniesState.aliveAnts > 0; step++)
     {
-        std::cout << "STEP " << step << std::endl;
+        CUSTOM_LOG("STEP ", step);
+        CUSTOM_LOG_ENDL;
         collisionHandler(colonyMap, coloniesState);
         antsMove(colonyMap, coloniesState, randomGenerator);
-        std::cout << std::endl;
+        CUSTOM_LOG_ENDL;
     }
     collisionHandler(colonyMap, coloniesState);
-    std::cout << "Number of alive ants " << coloniesState.aliveAnts << std::endl;
 
+    auto end = std::chrono::high_resolution_clock::now();
+    auto diff = std::chrono::duration_cast<std::chrono::nanoseconds>(end - start);
+    std::println(std::cout, "Precision Time: {} ns ({} ms)",
+                 diff.count(),
+                 diff.count() / 1'000'000.0);
+
+    std::println(std::cout, "Number of alive ants {}", coloniesState.aliveAnts);
     std::print(std::cout, "Program finished succesfully!");
     return 0;
 }
