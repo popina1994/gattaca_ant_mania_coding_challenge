@@ -6,12 +6,15 @@
 #include <format>
 #include <ranges>
 #include <string_view>
+#include <random>
 
 struct Node
 {
     std::unordered_map<std::string, Node*> htAdj;
+    bool colonyAlive = true;
+    std::string colonyName;
 
-    Node()
+    Node(const std::string& _colonyName): colonyName(_colonyName)
     {
 
     }
@@ -59,7 +62,7 @@ bool readColonyMap(const std::string& colonyMapFileName, Graph& colonyMap)
         auto splitRange = line | std::views::split(' ');
         auto subRangesIt = splitRange.begin();
         std::string curColonyName = std::ranges::to<std::string>(*subRangesIt);
-        colonyMap.htNodes[curColonyName] = new Node();
+        colonyMap.htNodes[curColonyName] = new Node(curColonyName);
         htDirColony[curColonyName] = {};
         std::print(std::cout, "CUR COLONY NAME {}", curColonyName);
 
@@ -84,10 +87,146 @@ bool readColonyMap(const std::string& colonyMapFileName, Graph& colonyMap)
     return true;
 }
 
+struct Ant
+{
+    int id;
+    std::string colonyName;
+    bool alive;
+
+    static int glId;
+
+    Ant(): id(glId++){}
+};
+
+int Ant::glId = 0;
+
+struct ColoniesState
+{
+    std::vector<Ant> vAnts;
+    int aliveAnts;
+
+    ColoniesState(int numAnts): aliveAnts(numAnts), vAnts(numAnts)
+    {}
+};
+
+struct RandomGenerator
+{
+    std::mt19937 gen;
+    std::vector<std::uniform_int_distribution<>> vDistributions;
+    static constexpr int NUM_DIRS = 4;
+    RandomGenerator(int seed): gen(seed), vDistributions(4)
+    {
+        int idx = 0;
+        for (auto& distribution: vDistributions)
+        {
+            distribution = std::uniform_int_distribution<> {0, idx};
+            idx++;
+        }
+    }
+
+    int generateDir(int numOutcomes)
+    {
+        return vDistributions[numOutcomes - 1](gen);
+    }
+};
+
+void initializeAnts(const Graph& colonies, ColoniesState& coloniesState, int seed)
+{
+    auto keyView = colonies.htNodes | std::views::keys;
+    std::vector<std::string> vColonyNames(keyView.begin(), keyView.end());
+    int numColonies = vColonyNames.size();
+
+    std::mt19937 gen(seed);
+    std::uniform_int_distribution<> dist(0, numColonies-1);
+
+    for (auto& ant: coloniesState.vAnts)
+    {
+        ant.alive = true;
+        int colonyIdx = dist(gen);
+        ant.colonyName = vColonyNames[colonyIdx];
+    }
+}
+
+void collisionHandler(Graph& colonyMap, ColoniesState& coloniesState)
+{
+    std::unordered_map<std::string, std::vector<int>> htAntPos;
+    auto aliveAnts = coloniesState.vAnts | std::ranges::views::filter([](const Ant& ant){
+            return ant.alive;
+    });
+    for (const auto& ant: aliveAnts)
+    {
+        htAntPos[ant.colonyName].push_back(ant.id);
+    }
+
+    for (const auto& [colonyName, ants]: htAntPos)
+    {
+        if (ants.size() > 1)
+        {
+            colonyMap.htNodes[colonyName]->colonyAlive = false;
+            std::cout << "FIGHTING DESTRUCTION: ";
+            for (auto antId: ants)
+            {
+                coloniesState.vAnts[antId].alive = false;
+                std::cout << antId << ";";
+            }
+            std::cout << std::endl;
+            std::cout << "COLONY " << colonyName << " DESTROYED" << std::endl;
+            coloniesState.aliveAnts -= ants.size();
+        }
+    }
+}
+
+void antsMove(Graph& colonyMap, ColoniesState& coloniesState, RandomGenerator& randomGenerator)
+{
+    auto aliveAnts = coloniesState.vAnts | std::ranges::views::filter([](const Ant& ant){
+            return ant.alive;
+    });
+
+    for (auto& ant: aliveAnts)
+    {
+        std::vector<std::string> vPotentialColonies;
+        for (const auto& [adjDir, adjColony]: colonyMap.htNodes[ant.colonyName]->htAdj)
+        {
+            if (colonyMap.htNodes[adjColony->colonyName]->colonyAlive)
+            {
+                vPotentialColonies.push_back(adjColony->colonyName);
+            }
+        }
+        if (vPotentialColonies.empty())
+        {
+            std::cout << ant.id << " ISOLATED " << ant.colonyName << std::endl;
+            continue;
+        }
+        int nextColonyIdx = randomGenerator.generateDir(vPotentialColonies.size());
+        std::string prevColony = ant.colonyName;
+        ant.colonyName = vPotentialColonies[nextColonyIdx];
+        std::cout << ant.id << " MOVED FROM " << prevColony << " TO " << ant.colonyName << std::endl;
+    }
+}
+
+
+
 int main()
 {
-    Graph graph;
-    readColonyMap("../../tests/hiveum_map_small.txt", graph);
+    static constexpr uint32_t NUM_STEPS = 10'000;
+    // static constexpr uint32_t NUM_STEPS = 100;
+    static constexpr uint32_t seed = 42;
+    static constexpr uint32_t numAnts = 4;
+
+    Graph colonyMap;
+    ColoniesState coloniesState(numAnts);
+    RandomGenerator randomGenerator(seed);
+
+    readColonyMap("../../tests/hiveum_map_small.txt", colonyMap);
+    initializeAnts(colonyMap, coloniesState, seed);
+    for (int step = 0; step < NUM_STEPS && coloniesState.aliveAnts > 0; step++)
+    {
+        collisionHandler(colonyMap, coloniesState);
+        antsMove(colonyMap, coloniesState, randomGenerator);
+    }
+    collisionHandler(colonyMap, coloniesState);
+    std::cout << "Number of alive ants " << coloniesState.aliveAnts << std::endl;
+
     std::print(std::cout, "Program finished succesfully!");
     return 0;
 }
