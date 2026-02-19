@@ -112,21 +112,13 @@ struct ColoniesState
 struct RandomGenerator
 {
     std::mt19937 gen;
-    std::vector<std::uniform_int_distribution<>> vDistributions;
-    static constexpr int NUM_DIRS = 4;
-    RandomGenerator(int seed): gen(seed), vDistributions(4)
-    {
-        int idx = 0;
-        for (auto& distribution: vDistributions)
-        {
-            distribution = std::uniform_int_distribution<> {0, idx};
-            idx++;
-        }
-    }
+    std::uniform_real_distribution<double> dist;
+    RandomGenerator(int seed): gen(seed), dist(0.0, 1.0)
+    {}
 
     int generateDir(int numOutcomes)
     {
-        return vDistributions[numOutcomes - 1](gen);
+        return int(dist(gen) * numOutcomes);
     }
 };
 
@@ -178,7 +170,7 @@ void collisionHandler(Graph& colonyMap, ColoniesState& coloniesState)
 
 void antsMove(Graph& colonyMap, ColoniesState& coloniesState, RandomGenerator& randomGenerator)
 {
-    auto aliveAnts = coloniesState.vAnts | std::ranges::views::filter([](const Ant& ant){
+    auto aliveAnts = coloniesState.vAnts | std::ranges::views::filter([](Ant& ant){
             return ant.alive;
     });
 
