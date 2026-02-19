@@ -204,25 +204,52 @@ void antsMove(Graph& colonyMap, ColoniesState& coloniesState, RandomGenerator& r
     }
 }
 
-
-
-int main()
+bool parseArguments(int argc, char* argv[],
+    uint32_t& seed, uint32_t& numAnts, std::string& fileName)
 {
-    static constexpr uint32_t NUM_STEPS = 10'000;
-    // static constexpr uint32_t NUM_STEPS = 100;
-    static constexpr uint32_t seed = 42;
-    static constexpr uint32_t numAnts = 4;
+    if (argc != 4) {
+        std::cerr << "Usage: " << argv[0] << " <seed> <num_ants> <filename>\n";
+        return false;
+    }
+
+    try {
+        seed = static_cast<int>(std::stoul(argv[1]));
+        numAnts = std::stoul(argv[2]);
+        fileName = argv[3];
+    }
+    catch (const std::exception& e) {
+        std::cerr << "Error parsing arguments: " << e.what() << "\n";
+        return false;
+    }
+    return true;
+}
+
+int main(int argc, char* argv[])
+{
+    // static constexpr uint32_t NUM_STEPS = 10'000;
+    static constexpr uint32_t NUM_STEPS = 100;
+    uint32_t seed;
+    uint32_t numAnts;
+    std::string colonyFileName;
+
+    if (!parseArguments(argc, argv, seed, numAnts, colonyFileName))
+    {
+        return 1;
+    }
 
     Graph colonyMap;
     ColoniesState coloniesState(numAnts);
     RandomGenerator randomGenerator(seed);
 
-    readColonyMap("../../tests/hiveum_map_small.txt", colonyMap);
+    readColonyMap(colonyFileName, colonyMap);
     initializeAnts(colonyMap, coloniesState, seed);
+
     for (int step = 0; step < NUM_STEPS && coloniesState.aliveAnts > 0; step++)
     {
+        std::cout << "STEP " << step << std::endl;
         collisionHandler(colonyMap, coloniesState);
         antsMove(colonyMap, coloniesState, randomGenerator);
+        std::cout << std::endl;
     }
     collisionHandler(colonyMap, coloniesState);
     std::cout << "Number of alive ants " << coloniesState.aliveAnts << std::endl;
