@@ -5,7 +5,8 @@ enum class  NodeType
 {
     NodeNaive,
     NodeOptAdjEdges,
-    NodeOptAdjEdgesNameRemoved
+    NodeOptAdjEdgesNameRemoved,
+    NodeOptColonyNamesInts
 };
 
 template <NodeType nodeType>
@@ -50,6 +51,20 @@ struct Node<NodeType::NodeOptAdjEdgesNameRemoved>
     std::string colonyName;
 
     Node(const std::string& _colonyName): colonyName(_colonyName)
+    {
+    }
+};
+
+template <>
+struct Node<NodeType::NodeOptColonyNamesInts>
+{
+    using SelfType = Node<NodeType::NodeOptColonyNamesInts>;
+    static constexpr uint32_t MAX_NUM_DIRS = 4;
+    std::array<SelfType*, MAX_NUM_DIRS> vAdj{};
+    bool colonyAlive = true;
+    uint32_t colonyName;
+
+    Node(uint32_t _colonyName): colonyName(_colonyName)
     {
     }
 };

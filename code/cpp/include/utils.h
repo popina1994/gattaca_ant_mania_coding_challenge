@@ -39,3 +39,17 @@ void log_internal_clean(Args&&... args) {
 #define CUSTOM_LOG(...)
 #define CUSTOM_LOG_ENDL
 #endif
+
+
+struct RandomGenerator
+{
+    std::mt19937 gen;
+    std::uniform_real_distribution<double> dist;
+    RandomGenerator(int seed): gen(seed), dist(0.0, 1.0)
+    {}
+
+    int generateDir(int numOutcomes)
+    {
+        return int(dist(gen) * numOutcomes);
+    }
+};
