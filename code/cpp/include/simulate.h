@@ -56,6 +56,7 @@ class Simulation
     static void collisionHandler(Graph<nodeType>& colonyMap,
         ColoniesState<nodeType>& coloniesState)
     {
+        // TODO: for INTS instead of hash, map with a vector of vectors.
         std::unordered_map<ColonyIdType, std::vector<int>> htAntPos;
         auto aliveAnts = coloniesState.vAnts | std::ranges::views::filter([](const Ant<nodeType>& ant){
                 return ant.alive;
@@ -64,12 +65,11 @@ class Simulation
         {
             htAntPos[ant.colonyName].push_back(ant.id);
         }
-        // TODO: constexpr
         for (const auto& [colonyName, ants]: htAntPos)
         {
             if (ants.size() > 1)
             {
-                std::string colonyNameStr;
+                std::string_view colonyNameStr;
                 if constexpr (nodeType == NodeType::NodeOptColonyNamesInts)
                 {
                     colonyNameStr = colonyMap.vColonyNames[colonyName];
@@ -102,6 +102,8 @@ class Simulation
         for (auto& ant: aliveAnts)
         {
             std::vector<ColonyIdType> vPotentialColonies;
+            // Reserve capacity to prevent allocations.
+            vPotentialColonies.reserve(GlobalConsts::MAX_NUM_DIRS);
             if constexpr (nodeType == NodeType::NodeNaive || nodeType == NodeType::NodeOptAdjEdges)
             {
                 // htAdj doesn't have an order for keys, while
@@ -138,7 +140,7 @@ class Simulation
             }
             else if constexpr (nodeType == NodeType::NodeOptColonyNamesInts)
             {
-                 for (const auto& adjColony: colonyMap.vNodes[ant.colonyName].vAdj)
+                for (const auto& adjColony: colonyMap.vNodes[ant.colonyName].vAdj)
                 {
                     if (adjColony != nullptr && adjColony->colonyAlive)
                     {
@@ -155,8 +157,9 @@ class Simulation
             }
             int nextColonyIdx = randomGenerator.generateDir(vPotentialColonies.size());
             ColonyIdType prevColony = ant.colonyName;
-            std::string prevColonyStr;
-            std::string curColonyStr;
+            // Spans instead of copies.
+            std::string_view prevColonyStr;
+            std::string_view curColonyStr;
             if constexpr (nodeType == NodeType::NodeOptColonyNamesInts)
             {
                 prevColonyStr = colonyMap.vColonyNames[prevColony];
@@ -167,8 +170,8 @@ class Simulation
                 prevColonyStr = ant.colonyName;
                 curColonyStr = vPotentialColonies[nextColonyIdx];
             }
-            ant.colonyName = vPotentialColonies[nextColonyIdx];
             CUSTOM_LOG(ant.id, " MOVED FROM ", prevColonyStr, " TO ", curColonyStr);
+            ant.colonyName = vPotentialColonies[nextColonyIdx];
         }
         CUSTOM_LOG_ENDL;
     }

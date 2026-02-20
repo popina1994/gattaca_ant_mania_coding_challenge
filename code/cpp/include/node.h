@@ -30,7 +30,7 @@ template <>
 struct Node<NodeType::NodeOptAdjEdges>
 {
     using SelfType = Node<NodeType::NodeOptAdjEdges>;
-    static constexpr uint32_t MAX_NUM_DIRS = 4;
+    static constexpr uint32_t MAX_NUM_DIRS = GlobalConsts::MAX_NUM_DIRS;
     std::array<std::pair<std::string, SelfType*>, MAX_NUM_DIRS> htAdj;
     bool colonyAlive = true;
     std::string colonyName;
@@ -45,7 +45,7 @@ template <>
 struct Node<NodeType::NodeOptAdjEdgesNameRemoved>
 {
     using SelfType = Node<NodeType::NodeOptAdjEdgesNameRemoved>;
-    static constexpr uint32_t MAX_NUM_DIRS = 4;
+    static constexpr uint32_t MAX_NUM_DIRS = GlobalConsts::MAX_NUM_DIRS;
     std::array<SelfType*, MAX_NUM_DIRS> vAdj{};
     bool colonyAlive = true;
     std::string colonyName;
@@ -59,7 +59,7 @@ template <>
 struct Node<NodeType::NodeOptColonyNamesInts>
 {
     using SelfType = Node<NodeType::NodeOptColonyNamesInts>;
-    static constexpr uint32_t MAX_NUM_DIRS = 4;
+    static constexpr uint32_t MAX_NUM_DIRS = GlobalConsts::MAX_NUM_DIRS;
     std::array<SelfType*, MAX_NUM_DIRS> vAdj{};
     bool colonyAlive = true;
     uint32_t colonyName;

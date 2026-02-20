@@ -40,6 +40,11 @@ void log_internal_clean(Args&&... args) {
 #define CUSTOM_LOG_ENDL
 #endif
 
+namespace GlobalConsts
+{
+    static constexpr uint32_t MAX_NUM_DIRS = 4;
+}
+
 
 struct RandomGenerator
 {

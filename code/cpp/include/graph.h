@@ -5,7 +5,7 @@
 template<NodeType nodeType>
 struct Graph
 {
-    static constexpr uint32_t MAX_NUM_DIRS = 4;
+    static constexpr uint32_t MAX_NUM_DIRS = GlobalConsts::MAX_NUM_DIRS;
     std::unordered_map<std::string, Node<nodeType>*> htNodes;
 
     Graph() = default;

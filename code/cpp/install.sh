@@ -7,4 +7,4 @@ sudo apt install graphviz
 #gprof my_program gmon.out | gprof2dot -s -o callgraph.dot
 #dot -Tpng callgraph.dot -o callgraph.png
 
-# AMDuProfCLI profile --config hotspots --call-graph-depth 128  -o ./output_dir ./main 1 4 ../../tests/hiveum_map_small.txt
+# AMDuProfCLI profile --config hotspots --call-graph-depth 128  -o ./output_dir ./main 1 400 3 ../../../tests/hiveum_map_medium.txt
