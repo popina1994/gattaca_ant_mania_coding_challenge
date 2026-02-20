@@ -53,6 +53,8 @@ struct Graph
 {
     std::unordered_map<std::string, Node*> htNodes;
 
+    // TODO: Copy to save the colony map
+
     ~Graph()
     {
         for (auto [nodeName, node]: htNodes)
@@ -133,6 +135,8 @@ struct ColoniesState
 {
     std::vector<Ant> vAnts;
     int aliveAnts;
+
+    ColoniesState& operator=(const ColoniesState& other) = default;
 
     ColoniesState(int numAnts): aliveAnts(numAnts), vAnts(numAnts)
     {}
@@ -248,13 +252,28 @@ bool parseArguments(int argc, char* argv[],
     return true;
 }
 
+void simulate(Graph& colonyMap, ColoniesState& coloniesState, RandomGenerator& randomGenerator)
+{
+    static constexpr uint32_t NUM_STEPS = 10'000;
+    // static constexpr uint32_t NUM_STEPS = 100;
+    for (int step = 0; step < NUM_STEPS && coloniesState.aliveAnts > 0; step++)
+    {
+        CUSTOM_LOG("STEP ", step);
+        CUSTOM_LOG_ENDL;
+        collisionHandler(colonyMap, coloniesState);
+        antsMove(colonyMap, coloniesState, randomGenerator);
+        CUSTOM_LOG_ENDL;
+    }
+    collisionHandler(colonyMap, coloniesState);
+}
+
 int main(int argc, char* argv[])
 {
-    // static constexpr uint32_t NUM_STEPS = 10'000;
-    static constexpr uint32_t NUM_STEPS = 100;
     uint32_t seed;
     uint32_t numAnts;
+    uint32_t numRepeatitions = 1;
     std::string colonyFileName;
+
 
     if (!parseArguments(argc, argv, seed, numAnts, colonyFileName))
     {
@@ -268,24 +287,21 @@ int main(int argc, char* argv[])
     readColonyMap(colonyFileName, colonyMap);
     initializeAnts(colonyMap, coloniesState, seed);
 
-    auto start = std::chrono::high_resolution_clock::now();
-    for (int step = 0; step < NUM_STEPS && coloniesState.aliveAnts > 0; step++)
+    // TODO: Save state for simulation.
+
+    for (int idx = 0; idx < numRepeatitions; idx ++)
     {
-        CUSTOM_LOG("STEP ", step);
-        CUSTOM_LOG_ENDL;
-        collisionHandler(colonyMap, coloniesState);
-        antsMove(colonyMap, coloniesState, randomGenerator);
-        CUSTOM_LOG_ENDL;
+        auto start = std::chrono::high_resolution_clock::now();
+        simulate(colonyMap, coloniesState, randomGenerator);
+
+        auto end = std::chrono::high_resolution_clock::now();
+        auto diff = std::chrono::duration_cast<std::chrono::nanoseconds>(end - start);
+        std::println(std::cout, "Precision Time: {} ns ({} ms)",
+                    diff.count(),
+                    diff.count() / 1'000'000.0);
+
+        std::println(std::cout, "Number of alive ants {}", coloniesState.aliveAnts);
     }
-    collisionHandler(colonyMap, coloniesState);
-
-    auto end = std::chrono::high_resolution_clock::now();
-    auto diff = std::chrono::duration_cast<std::chrono::nanoseconds>(end - start);
-    std::println(std::cout, "Precision Time: {} ns ({} ms)",
-                 diff.count(),
-                 diff.count() / 1'000'000.0);
-
-    std::println(std::cout, "Number of alive ants {}", coloniesState.aliveAnts);
     std::print(std::cout, "Program finished succesfully!");
     return 0;
 }
