@@ -53,7 +53,47 @@ struct Graph
 {
     std::unordered_map<std::string, Node*> htNodes;
 
-    // TODO: Copy to save the colony map
+    Graph() = default;
+
+    Graph(const Graph& other)
+    {
+        for (auto [nodeName, node]: other.htNodes)
+        {
+            htNodes[nodeName] = new Node(node->colonyName);
+        }
+
+        for (auto [nodeName, node]: other.htNodes)
+        {
+            for (auto [dir, adjNode]: node->htAdj)
+            {
+                htNodes[nodeName]->htAdj[dir] = htNodes[adjNode->colonyName];
+            }
+        }
+    }
+
+    Graph& operator=(const Graph& other)
+    {
+        for (auto [nodeName, node]: htNodes)
+        {
+            delete node;
+        }
+        htNodes.clear();
+
+        for (auto [nodeName, node]: other.htNodes)
+        {
+            htNodes[nodeName] = new Node(node->colonyName);
+        }
+
+        for (auto [nodeName, node]: other.htNodes)
+        {
+            for (auto [dir, adjNode]: node->htAdj)
+            {
+                htNodes[nodeName]->htAdj[dir] = htNodes[adjNode->colonyName];
+            }
+        }
+
+        return *this;
+    }
 
     ~Graph()
     {
@@ -77,6 +117,7 @@ splitDirAndColonyName(const std::string& str)
     return {adjColonyDirection, adjColonyName};
 }
 
+__attribute__((no_instrument_function))
 bool readColonyMap(const std::string& colonyMapFileName, Graph& colonyMap)
 {
     std::ifstream colonyMapFile(colonyMapFileName);
@@ -155,6 +196,7 @@ struct RandomGenerator
     }
 };
 
+__attribute__((no_instrument_function))
 void initializeAnts(const Graph& colonies, ColoniesState& coloniesState, int seed)
 {
     auto keyView = colonies.htNodes | std::views::keys;
@@ -271,7 +313,7 @@ int main(int argc, char* argv[])
 {
     uint32_t seed;
     uint32_t numAnts;
-    uint32_t numRepeatitions = 1;
+    uint32_t numRepeatitions = 1000;
     std::string colonyFileName;
 
 
@@ -280,17 +322,19 @@ int main(int argc, char* argv[])
         return 1;
     }
 
-    Graph colonyMap;
-    ColoniesState coloniesState(numAnts);
+    Graph colonyMapOriginal;
+    ColoniesState coloniesStateOriginal(numAnts);
     RandomGenerator randomGenerator(seed);
 
-    readColonyMap(colonyFileName, colonyMap);
-    initializeAnts(colonyMap, coloniesState, seed);
-
-    // TODO: Save state for simulation.
+    readColonyMap(colonyFileName, colonyMapOriginal);
+    initializeAnts(colonyMapOriginal, coloniesStateOriginal, seed);
 
     for (int idx = 0; idx < numRepeatitions; idx ++)
     {
+        ColoniesState coloniesState = coloniesStateOriginal;
+        Graph colonyMap = colonyMapOriginal;
+        std::println(std::cout, "Iteration: {}", idx);
+
         auto start = std::chrono::high_resolution_clock::now();
         simulate(colonyMap, coloniesState, randomGenerator);
 

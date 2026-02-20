@@ -1,0 +1,6 @@
+code/cpp/main_session.uprof
+code/cpp/output_dir
+*.png
+*.dot
+*.out
+*main
