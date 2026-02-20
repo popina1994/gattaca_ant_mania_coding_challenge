@@ -17,14 +17,29 @@ class Simulation
     RandomGenerator randomGenerator;
     uint32_t seed;
 
+    using ColonyIdType =
+            std::conditional_t <
+            nodeType==NodeType::NodeOptColonyNamesInts,
+            uint32_t, std::string>;
 
     static void initializeAntsInner(const Graph<nodeType>& colonies,
     ColoniesState<nodeType>& coloniesState, uint32_t seed)
     {
-        // CONDITIONAL ...
-        // template alias?
-        auto keyView = colonies.htNodes | std::views::keys;
-        std::vector<std::string> vColonyNames(keyView.begin(), keyView.end());
+        std::vector<ColonyIdType> vColonyNames;
+        if constexpr (nodeType == NodeType::NodeOptColonyNamesInts)
+        {
+            auto keyView = colonies.vNodes;
+            for (const auto& node: colonies.vNodes)
+            {
+                vColonyNames.push_back(node.colonyName);
+            }
+        }
+        else
+        {
+            auto keyView = colonies.htNodes | std::views::keys;
+            vColonyNames.assign(keyView.begin(), keyView.end());
+        }
+
         int numColonies = vColonyNames.size();
 
         std::mt19937 gen(seed);
@@ -41,8 +56,7 @@ class Simulation
     static void collisionHandler(Graph<nodeType>& colonyMap,
         ColoniesState<nodeType>& coloniesState)
     {
-        // CONDITIONAL ...
-        std::unordered_map<std::string, std::vector<int>> htAntPos;
+        std::unordered_map<ColonyIdType, std::vector<int>> htAntPos;
         auto aliveAnts = coloniesState.vAnts | std::ranges::views::filter([](const Ant<nodeType>& ant){
                 return ant.alive;
         });
@@ -55,7 +69,16 @@ class Simulation
         {
             if (ants.size() > 1)
             {
-                colonyMap.htNodes[colonyName]->colonyAlive = false;
+                std::string colonyNameStr;
+                if constexpr (nodeType == NodeType::NodeOptColonyNamesInts)
+                {
+                    colonyNameStr = colonyMap.vColonyNames[colonyName];
+                    colonyMap.vNodes[colonyName].colonyAlive = false;
+                }
+                else
+                {
+                    colonyNameStr = colonyName;
+                }
                 CUSTOM_LOG("FIGHTING DESTRUCTION: ");
                 for (auto antId: ants)
                 {
@@ -63,7 +86,7 @@ class Simulation
                     CUSTOM_LOG(antId, ";");
                 }
                 CUSTOM_LOG_ENDL;
-                CUSTOM_LOG("COLONY ", colonyName, " DESTROYED");
+                CUSTOM_LOG("COLONY ", colonyNameStr, " DESTROYED");
                 CUSTOM_LOG_ENDL;
                 coloniesState.aliveAnts -= ants.size();
             }
@@ -78,7 +101,7 @@ class Simulation
 
         for (auto& ant: aliveAnts)
         {
-            std::vector<std::string> vPotentialColonies;
+            std::vector<ColonyIdType> vPotentialColonies;
             if constexpr (nodeType == NodeType::NodeNaive || nodeType == NodeType::NodeOptAdjEdges)
             {
                 // htAdj doesn't have an order for keys, while
@@ -113,6 +136,16 @@ class Simulation
                     }
                 }
             }
+            else if constexpr (nodeType == NodeType::NodeOptColonyNamesInts)
+            {
+                 for (const auto& adjColony: colonyMap.vNodes[ant.colonyName].vAdj)
+                {
+                    if (adjColony != nullptr && adjColony->colonyAlive)
+                    {
+                        vPotentialColonies.push_back(adjColony->colonyName);
+                    }
+                }
+            }
 
             if (vPotentialColonies.empty())
             {
@@ -121,9 +154,21 @@ class Simulation
                 continue;
             }
             int nextColonyIdx = randomGenerator.generateDir(vPotentialColonies.size());
-            std::string prevColony = ant.colonyName;
+            ColonyIdType prevColony = ant.colonyName;
+            std::string prevColonyStr;
+            std::string curColonyStr;
+            if constexpr (nodeType == NodeType::NodeOptColonyNamesInts)
+            {
+                prevColonyStr = colonyMap.vColonyNames[prevColony];
+                curColonyStr = colonyMap.vColonyNames[vPotentialColonies[nextColonyIdx]];
+            }
+            else
+            {
+                prevColonyStr = ant.colonyName;
+                curColonyStr = vPotentialColonies[nextColonyIdx];
+            }
             ant.colonyName = vPotentialColonies[nextColonyIdx];
-            CUSTOM_LOG(ant.id, " MOVED FROM ", prevColony, " TO ", ant.colonyName);
+            CUSTOM_LOG(ant.id, " MOVED FROM ", prevColonyStr, " TO ", curColonyStr);
         }
         CUSTOM_LOG_ENDL;
     }

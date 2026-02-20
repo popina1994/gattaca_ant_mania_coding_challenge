@@ -4,7 +4,7 @@ project(GATTACA LANGUAGES CXX)
 # Set C++ standard
 set(CMAKE_CXX_STANDARD 23)
 
-add_compile_options(-Wall -Wextra -Wshadow -Wconversion -Wuninitialized -Wmissing-declarations -Wsign-compare)
+# add_compile_options(-Wall -Wextra -Wshadow -Wconversion -Wuninitialized -Wmissing-declarations -Wsign-compare)
 
 
 
@@ -16,7 +16,7 @@ ${PROJECT_SOURCE_DIR}/src/*.cxx
 )
 
 add_executable(${PROJECT_NAME} ${PROJECT_SOURCE_DIR}/src/main.cpp ${CPP_SOURCES})
-target_compile_definitions(${PROJECT_NAME} PRIVATE LOG_ON=0)
+target_compile_definitions(${PROJECT_NAME} PRIVATE LOG_ON=false)
 
 target_compile_options(${PROJECT_NAME} PRIVATE -g -O2 -fno-omit-frame-pointer )
 

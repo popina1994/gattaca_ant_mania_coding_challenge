@@ -74,7 +74,7 @@ int main(int argc, char* argv[])
         evaluateExperiment<NodeType::NodeOptAdjEdgesNameRemoved>(seed, numAnts, colonyFileName);
             break;
         case 3:
-        // evaluateExperiment<NodeType::NodeOptColonyNamesInts>(seed, numAnts, colonyFileName);
+        evaluateExperiment<NodeType::NodeOptColonyNamesInts>(seed, numAnts, colonyFileName);
         default:
             std::cerr << "Invalid optimization level: " << optimizationLevel << "\n";
             return 1;

@@ -67,7 +67,11 @@
         "__nullptr": "cpp",
         "__split_buffer": "cpp",
         "cinttypes": "cpp",
-        "any": "cpp"
+        "any": "cpp",
+        "__locale": "cpp",
+        "__hash_table": "cpp",
+        "queue": "cpp",
+        "stack": "cpp"
     },
     "cmake.sourceDirectory": "/home/popina/Programs/C++/disk/gattaca_ant_mania_coding_challenge/code/cpp"
 }

@@ -173,7 +173,7 @@ bool readColonyMap(const std::string& colonyMapFileName, Graph<nodeType>& colony
         if constexpr (nodeType == NodeType::NodeOptColonyNamesInts)
         {
             colonyMap.vColonyNames.push_back(curColonyName);
-            colonyMap.vNodes.push_back(new Node<NodeType::NodeOptColonyNamesInts>(cntLine));
+            colonyMap.vNodes.push_back(Node<NodeType::NodeOptColonyNamesInts>(cntLine));
             htColonyNameToIdx[curColonyName] = cntLine;
         }
         else
@@ -202,7 +202,7 @@ bool readColonyMap(const std::string& colonyMapFileName, Graph<nodeType>& colony
             for (auto& [adjColonyDir, adjColonyName]: htDirColony[curColonyName])
             {
                 int dirIdx = dirToIdx.at(adjColonyDir);
-                colonyMap.vNodes[idxColony]->vAdj[dirIdx] = colonyMap.vNodes[htColonyNameToIdx[adjColonyName]];
+                colonyMap.vNodes[idxColony].vAdj[dirIdx] = &colonyMap.vNodes[htColonyNameToIdx[adjColonyName]];
             }
             idxColony++;
         }

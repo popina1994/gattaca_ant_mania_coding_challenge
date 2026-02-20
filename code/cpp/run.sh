@@ -2,6 +2,7 @@ EXE_NAME=GATTACA
 
 cd build
 rm $EXE_NAME
+rm * -rf
 cmake ..
 make -j
 
@@ -13,7 +14,8 @@ num_ants=(400)
 
 #seeds=(1 4 42)
 seeds=(1)
-optimization_level=(0 1 2)
+optimization_level=(0 1 2 3)
+# optimization_level=(0 3)
 
 for dataset in "${datasets[@]}"; do
     for num_ant in "${num_ants[@]}"; do
