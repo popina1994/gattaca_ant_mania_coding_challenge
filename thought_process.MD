@@ -51,20 +51,30 @@ struct Node
 };
 ```
 vector<Node> vNodes;
-3. Optimization 2. Move node and out connection names to the out structures, to further improve cache locality.
+3. Optimization 2. Remove out connection names from out connections to improve cache locality.
+
 
 ```cpp
 Node
 {
+    string nodeName;
     Node* outEdges[4];
 }
-vector<Node> vNodes;
-vector<string> vNodeNames;
-vector<string> vEdgeNames;\\ (4 * numNodes)
 ```
 
-4. Optimization 3, use cache align each of the nodes to not cause??
-5. Optimization 4, try to see what is happening if we remove nodes corresponding to destroyed colonies.
+4. Store nodes in vectors instead of hash maps, and replace nodeName with nodeIdx, while keeping node names separately  to further improve cache locality.
+
+```cpp
+vector<Node> vNodes;
+vector<string> vNodeNames;
+Node
+{
+    Node* outEdges[4];
+}
+```
+
+5. Optimization 3, use cache align each of the nodes to not cause??
+6. Optimization 4, try to see what is happening if we remove nodes corresponding to destroyed colonies.
 
 ### Data structure to simulate ants
 

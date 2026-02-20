@@ -41,7 +41,7 @@ enum class  NodeType
 {
     NodeNaive,
     NodeOptAdjEdges,
-    NodeOptOutEdgeOnly
+    NodeOptAdjEdgesNameRemoved
 };
 
 template <NodeType nodeType>
@@ -50,7 +50,8 @@ struct Node;
 template <>
 struct Node<NodeType::NodeNaive>
 {
-    std::unordered_map<std::string, Node*> htAdj;
+    using SelfType = Node<NodeType::NodeNaive>;
+    std::unordered_map<std::string, SelfType*> htAdj;
     bool colonyAlive = true;
     std::string colonyName;
 
@@ -63,8 +64,9 @@ struct Node<NodeType::NodeNaive>
 template <>
 struct Node<NodeType::NodeOptAdjEdges>
 {
+    using SelfType = Node<NodeType::NodeOptAdjEdges>;
     static constexpr uint32_t MAX_NUM_DIRS = 4;
-    std::array<std::pair<std::string, Node*>, MAX_NUM_DIRS> htAdj;
+    std::array<std::pair<std::string, SelfType*>, MAX_NUM_DIRS> htAdj;
     bool colonyAlive = true;
     std::string colonyName;
 
@@ -75,15 +77,16 @@ struct Node<NodeType::NodeOptAdjEdges>
 };
 
 template <>
-struct Node<NodeType::NodeOptOutEdgeOnly>
+struct Node<NodeType::NodeOptAdjEdgesNameRemoved>
 {
-    std::unordered_map<std::string, Node*> htAdj;
+    using SelfType = Node<NodeType::NodeOptAdjEdgesNameRemoved>;
+    static constexpr uint32_t MAX_NUM_DIRS = 4;
+    std::array<SelfType*, MAX_NUM_DIRS> vAdj{};
     bool colonyAlive = true;
     std::string colonyName;
 
     Node(const std::string& _colonyName): colonyName(_colonyName)
     {
-
     }
 };
 
@@ -101,22 +104,38 @@ struct Graph
             htNodes[nodeName] = new Node<nodeType>(node->colonyName);
         }
 
-        for (const auto& [nodeName, node]: other.htNodes)
+        if constexpr (nodeType == NodeType::NodeNaive || nodeType == NodeType::NodeOptAdjEdges)
         {
-            if constexpr (nodeType == NodeType::NodeNaive)
+            for (const auto& [nodeName, node]: other.htNodes)
             {
-                for (const auto& [dir, adjNode]: node->htAdj)
+                if constexpr (nodeType == NodeType::NodeNaive)
                 {
-                    htNodes[nodeName]->htAdj[dir] = htNodes[adjNode->colonyName];
+                    for (const auto& [dir, adjNode]: node->htAdj)
+                    {
+                        htNodes[nodeName]->htAdj[dir] = htNodes[adjNode->colonyName];
+                    }
+                }
+                else if constexpr (nodeType == NodeType::NodeOptAdjEdges)
+                {
+                    int idx = 0;
+                    for (const auto& [dirName, adjNode]: node->htAdj)
+                    {
+                        if (adjNode == nullptr) {continue;}
+                        htNodes[nodeName]->htAdj[idx] = {dirName, htNodes[adjNode->colonyName]};
+                        idx++;
+                    }
                 }
             }
-            else if constexpr (nodeType == NodeType::NodeOptAdjEdges)
+        }
+        else if constexpr (nodeType == NodeType::NodeOptAdjEdgesNameRemoved)
+        {
+            for (const auto& [nodeName, node]: other.htNodes)
             {
                 int idx = 0;
-                for (const auto& [dirName, adjNode]: node->htAdj)
+                for (const auto& adjNode: node->vAdj)
                 {
                     if (adjNode == nullptr) {continue;}
-                    htNodes[nodeName]->htAdj[idx] = {dirName, htNodes[adjNode->colonyName]};
+                    htNodes[nodeName]->vAdj[idx] = htNodes[adjNode->colonyName];
                     idx++;
                 }
             }
@@ -208,6 +227,11 @@ bool readColonyMap(const std::string& colonyMapFileName, Graph<nodeType>& colony
             {
                 int dirIdx = dirToIdx.at(adjColonyDir);
                 colonyMap.htNodes[curColonyName]->htAdj[dirIdx] = {adjColonyName, colonyMap.htNodes[adjColonyName]};
+            }
+            else if constexpr (nodeType == NodeType::NodeOptAdjEdgesNameRemoved)
+            {
+                int dirIdx = dirToIdx.at(adjColonyDir);
+                colonyMap.htNodes[curColonyName]->vAdj[dirIdx] = colonyMap.htNodes[adjColonyName];
             }
         }
     }
@@ -313,16 +337,29 @@ void antsMove(Graph<nodeType>& colonyMap, ColoniesState& coloniesState, RandomGe
     for (auto& ant: aliveAnts)
     {
         std::vector<std::string> vPotentialColonies;
-        for (const auto& [adjDir, adjColony]: colonyMap.htNodes[ant.colonyName]->htAdj)
+        if constexpr (nodeType == NodeType::NodeNaive || nodeType == NodeType::NodeOptAdjEdges)
         {
-            if constexpr (nodeType == NodeType::NodeNaive)
+            for (const auto& [adjDir, adjColony]: colonyMap.htNodes[ant.colonyName]->htAdj)
             {
-                if (colonyMap.htNodes[adjColony->colonyName]->colonyAlive)
+                if constexpr (nodeType == NodeType::NodeNaive)
                 {
-                    vPotentialColonies.push_back(adjColony->colonyName);
+                    if (colonyMap.htNodes[adjColony->colonyName]->colonyAlive)
+                    {
+                        vPotentialColonies.push_back(adjColony->colonyName);
+                    }
+                }
+                else if constexpr (nodeType == NodeType::NodeOptAdjEdges)
+                {
+                    if (adjColony != nullptr && adjColony->colonyAlive)
+                    {
+                        vPotentialColonies.push_back(adjColony->colonyName);
+                    }
                 }
             }
-            else if constexpr (nodeType == NodeType::NodeOptAdjEdges)
+        }
+        else  if constexpr (nodeType == NodeType::NodeOptAdjEdgesNameRemoved)
+        {
+            for (const auto& adjColony: colonyMap.htNodes[ant.colonyName]->vAdj)
             {
                 if (adjColony != nullptr && adjColony->colonyAlive)
                 {
@@ -330,6 +367,7 @@ void antsMove(Graph<nodeType>& colonyMap, ColoniesState& coloniesState, RandomGe
                 }
             }
         }
+
         if (vPotentialColonies.empty())
         {
             CUSTOM_LOG(ant.id, " ISOLATED ", ant.colonyName);
@@ -384,7 +422,7 @@ template <NodeType nodeType>
 void evaluateExperiment(uint32_t seed, uint32_t numAnts,
         const std::string& colonyFileName)
 {
-    uint32_t numRepetitions = 10;
+    uint32_t numRepetitions = 100;
     Graph<nodeType> colonyMapOriginal;
     ColoniesState coloniesStateOriginal(numAnts);
 
@@ -424,7 +462,8 @@ int main(int argc, char* argv[])
         return 1;
     }
     // evaluateExperiment<NodeType::NodeNaive>(seed, numAnts, colonyFileName);
-    evaluateExperiment<NodeType::NodeOptAdjEdges>(seed, numAnts, colonyFileName);
+    // evaluateExperiment<NodeType::NodeOptAdjEdges>(seed, numAnts, colonyFileName);
+    evaluateExperiment<NodeType::NodeOptAdjEdgesNameRemoved>(seed, numAnts, colonyFileName);
 
     std::print(std::cout, "Program finished succesfully!");
     return 0;
