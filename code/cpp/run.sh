@@ -1,7 +1,27 @@
-# g++ -g -O2 -fno-omit-frame-pointer main.cpp -std=c++23 -DLOG_ON=0 -o main
+EXE_NAME=GATTACA
+
 cd build
+rm $EXE_NAME
 cmake ..
 make -j
 
-./GATTACA 1 4 ../../../tests/hiveum_map_small.txt
-./GATTACA 1 100 ../../../tests/hiveum_map_medium.txt
+#datasets=("hiveum_map_small.txt" "hiveum_map_medium.txt")
+datasets=("hiveum_map_medium.txt")
+#num_ants=(1 2 4 8 16 32)
+num_ants=(400)
+
+#seeds=(1 4 42)
+seeds=(1)
+optimization_level=(0 1 2)
+
+for dataset in "${datasets[@]}"; do
+    for num_ant in "${num_ants[@]}"; do
+        for seed in "${seeds[@]}"; do
+            for opt_level in "${optimization_level[@]}"; do
+                echo ""
+                echo "RUN ${dataset} ${num_ant} ${seed} ${opt_level}"
+                ./$EXE_NAME ${seed} ${num_ant} ${opt_level} ../../../tests/${dataset}
+            done
+        done
+    done
+done

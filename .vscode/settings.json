@@ -64,7 +64,8 @@
         "variant": "cpp",
         "format": "cpp",
         "text_encoding": "cpp",
-        "__nullptr": "cpp"
+        "__nullptr": "cpp",
+        "__split_buffer": "cpp"
     },
     "cmake.sourceDirectory": "/home/popina/Programs/C++/disk/gattaca_ant_mania_coding_challenge/code/cpp"
 }

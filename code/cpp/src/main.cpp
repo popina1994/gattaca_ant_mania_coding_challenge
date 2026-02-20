@@ -77,7 +77,7 @@ void collisionHandler(Graph<nodeType>& colonyMap, ColoniesState& coloniesState)
 }
 
 template<NodeType nodeType>
-void antsMove(Graph<nodeType>& colonyMap, ColoniesState& coloniesState, RandomGenerator& randomGenerator)
+void antsMove(const Graph<nodeType>& colonyMap, ColoniesState& coloniesState, RandomGenerator& randomGenerator)
 {
     auto aliveAnts = coloniesState.vAnts | std::ranges::views::filter([](Ant& ant){
             return ant.alive;
@@ -88,11 +88,11 @@ void antsMove(Graph<nodeType>& colonyMap, ColoniesState& coloniesState, RandomGe
         std::vector<std::string> vPotentialColonies;
         if constexpr (nodeType == NodeType::NodeNaive || nodeType == NodeType::NodeOptAdjEdges)
         {
-            for (const auto& [adjDir, adjColony]: colonyMap.htNodes[ant.colonyName]->htAdj)
+            for (const auto& [adjDir, adjColony]: colonyMap.htNodes.at(ant.colonyName)->htAdj)
             {
                 if constexpr (nodeType == NodeType::NodeNaive)
                 {
-                    if (colonyMap.htNodes[adjColony->colonyName]->colonyAlive)
+                    if (colonyMap.htNodes.at(adjColony->colonyName)->colonyAlive)
                     {
                         vPotentialColonies.push_back(adjColony->colonyName);
                     }
@@ -108,7 +108,7 @@ void antsMove(Graph<nodeType>& colonyMap, ColoniesState& coloniesState, RandomGe
         }
         else  if constexpr (nodeType == NodeType::NodeOptAdjEdgesNameRemoved)
         {
-            for (const auto& adjColony: colonyMap.htNodes[ant.colonyName]->vAdj)
+            for (const auto& adjColony: colonyMap.htNodes.at(ant.colonyName)->vAdj)
             {
                 if (adjColony != nullptr && adjColony->colonyAlive)
                 {
@@ -129,26 +129,6 @@ void antsMove(Graph<nodeType>& colonyMap, ColoniesState& coloniesState, RandomGe
         CUSTOM_LOG(ant.id, " MOVED FROM ", prevColony, " TO ", ant.colonyName);
     }
     CUSTOM_LOG_ENDL;
-}
-
-bool parseArguments(int argc, char* argv[],
-    uint32_t& seed, uint32_t& numAnts, std::string& fileName)
-{
-    if (argc != 4) {
-        std::cerr << "Usage: " << argv[0] << " <seed> <num_ants> <filename>\n";
-        return false;
-    }
-
-    try {
-        seed = static_cast<int>(std::stoul(argv[1]));
-        numAnts = std::stoul(argv[2]);
-        fileName = argv[3];
-    }
-    catch (const std::exception& e) {
-        std::cerr << "Error parsing arguments: " << e.what() << "\n";
-        return false;
-    }
-    return true;
 }
 
 template <NodeType nodeType>
@@ -198,22 +178,58 @@ void evaluateExperiment(uint32_t seed, uint32_t numAnts,
     }
 }
 
+bool parseArguments(int argc, char* argv[],
+    uint32_t& seed, uint32_t& numAnts, uint32_t& optimizationLevel,
+    std::string& fileName)
+{
+    if (argc != 5) {
+        std::cerr << "Usage: " << argv[0] << " <seed> <num_ants> <optimization_level> <filename>\n";
+        return false;
+    }
+
+    try {
+        seed = std::stoul(argv[1]);
+        numAnts = std::stoul(argv[2]);
+        optimizationLevel = std::stoul(argv[3]);
+        fileName = argv[4];
+    }
+    catch (const std::exception& e) {
+        std::cerr << "Error parsing arguments: " << e.what() << "\n";
+        return false;
+    }
+    return true;
+}
+
 int main(int argc, char* argv[])
 {
     uint32_t seed;
     uint32_t numAnts;
+    uint32_t optimizationLevel;
 
     std::string colonyFileName;
 
 
-    if (!parseArguments(argc, argv, seed, numAnts, colonyFileName))
+    if (!parseArguments(argc, argv, seed, numAnts, optimizationLevel, colonyFileName))
     {
         return 1;
     }
-    // evaluateExperiment<NodeType::NodeNaive>(seed, numAnts, colonyFileName);
-    // evaluateExperiment<NodeType::NodeOptAdjEdges>(seed, numAnts, colonyFileName);
-    evaluateExperiment<NodeType::NodeOptAdjEdgesNameRemoved>(seed, numAnts, colonyFileName);
+    switch (optimizationLevel)
+    {
+        case 0:
+        evaluateExperiment<NodeType::NodeNaive>(seed, numAnts, colonyFileName);
+            break;
+        case 1:
+        evaluateExperiment<NodeType::NodeOptAdjEdges>(seed, numAnts, colonyFileName);
+            break;
+        case 2:
+        evaluateExperiment<NodeType::NodeOptAdjEdgesNameRemoved>(seed, numAnts, colonyFileName);
+            break;
+        default:
+            std::cerr << "Invalid optimization level: " << optimizationLevel << "\n";
+            return 1;
+    }
 
-    std::print(std::cout, "Program finished succesfully!");
+    std::print(std::cout, "Program finished successfully!");
+
     return 0;
 }
