@@ -63,7 +63,7 @@ struct Node<NodeType::NodeOptColonyNamesInts>
     std::array<SelfType*, MAX_NUM_DIRS> vAdj{};
     bool colonyAlive = true;
     uint32_t colonyName;
-
+    Node(){}
     Node(uint32_t _colonyName): colonyName(_colonyName)
     {
     }

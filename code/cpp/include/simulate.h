@@ -81,6 +81,10 @@ class Simulation
             std::vector<std::string> vPotentialColonies;
             if constexpr (nodeType == NodeType::NodeNaive || nodeType == NodeType::NodeOptAdjEdges)
             {
+                // htAdj doesn't have an order for keys, while
+                // vector of pairs always has a fixed order, thus
+                // these two will not produce the order. Is there
+                // a defaultdict in C++?
                 for (const auto& [adjDir, adjColony]: colonyMap.htNodes.at(ant.colonyName)->htAdj)
                 {
                     if constexpr (nodeType == NodeType::NodeNaive)

@@ -7,6 +7,7 @@ make -j
 
 #datasets=("hiveum_map_small.txt" "hiveum_map_medium.txt")
 datasets=("hiveum_map_medium.txt")
+# datasets=("hiveum_map_small.txt")
 #num_ants=(1 2 4 8 16 32)
 num_ants=(400)
 

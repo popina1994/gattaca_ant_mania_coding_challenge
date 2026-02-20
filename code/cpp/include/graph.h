@@ -21,6 +21,7 @@ struct Graph
         {
             for (const auto& [nodeName, node]: other.htNodes)
             {
+                *htNodes[nodeName] = *node;
                 if constexpr (nodeType == NodeType::NodeNaive)
                 {
                     for (const auto& [dir, adjNode]: node->htAdj)
@@ -43,6 +44,8 @@ struct Graph
         {
             for (const auto& [nodeName, node]: other.htNodes)
             {
+                *htNodes[nodeName] = *node;
+                htNodes[nodeName]->colonyAlive = node->colonyAlive;
                 for (int idx = 0; idx < MAX_NUM_DIRS; idx++)
                 {
                     const auto& adjNode = node->vAdj[idx];
@@ -83,29 +86,32 @@ struct Graph
 template<>
 struct Graph<NodeType::NodeOptColonyNamesInts>
 {
-    std::vector<Node<NodeType::NodeOptColonyNamesInts>*> vNodes;
+    std::vector<Node<NodeType::NodeOptColonyNamesInts>> vNodes;
     std::vector<std::string> vColonyNames;
     static constexpr uint32_t MAX_NUM_DIRS = 4;
     Graph() = default;
 
     void copyNode(const Graph<NodeType::NodeOptColonyNamesInts>& other)
     {
-        for (const auto& node: other.vNodes)
+        vNodes.resize(other.vNodes.size());
+        for (size_t i = 0; i < other.vNodes.size(); i++)
         {
-            vNodes.push_back(new Node<NodeType::NodeOptColonyNamesInts>(node->colonyName));
+            // copies all fields including pointers, but we will overwrite pointers
+            vNodes[i] = other.vNodes[i];
         }
-        for (const auto& otherColonyName: other.vColonyNames)
+        vColonyNames.resize(other.vColonyNames.size());
+        for (size_t i = 0; i < other.vColonyNames.size(); i++)
         {
-            vColonyNames.push_back(otherColonyName);
+            vColonyNames[i] = other.vColonyNames[i];
         }
         int idxNode = 0;
         for (const auto& node: other.vNodes)
         {
             for (int idx = 0; idx < MAX_NUM_DIRS; idx++)
             {
-                const auto& adjNode = node->vAdj[idx];
-                if (node->vAdj[idx] == nullptr) {continue;}
-                vNodes[idxNode]->vAdj[idx] = vNodes[adjNode->colonyName];
+                const auto& adjNode = node.vAdj[idx];
+                if (node.vAdj[idx] == nullptr) {continue;}
+                vNodes[idxNode].vAdj[idx] = &vNodes[adjNode->colonyName];
             }
             idxNode++;
         }
@@ -118,10 +124,6 @@ struct Graph<NodeType::NodeOptColonyNamesInts>
 
     Graph& operator=(const Graph& other)
     {
-        for (auto  node: vNodes)
-        {
-            delete node;
-        }
         vNodes.clear();
         vColonyNames.clear();
 
@@ -132,10 +134,6 @@ struct Graph<NodeType::NodeOptColonyNamesInts>
 
     ~Graph()
     {
-        for (auto node: vNodes)
-        {
-            delete node;
-        }
     }
 };
 
@@ -222,7 +220,7 @@ bool readColonyMap(const std::string& colonyMapFileName, Graph<nodeType>& colony
                 else if constexpr (nodeType == NodeType::NodeOptAdjEdges)
                 {
                     int dirIdx = dirToIdx.at(adjColonyDir);
-                    colonyMap.htNodes[curColonyName]->htAdj[dirIdx] = {adjColonyName, colonyMap.htNodes[adjColonyName]};
+                    colonyMap.htNodes[curColonyName]->htAdj[dirIdx] = {adjColonyDir, colonyMap.htNodes[adjColonyName]};
                 }
                 else if constexpr (nodeType == NodeType::NodeOptAdjEdgesNameRemoved)
                 {
