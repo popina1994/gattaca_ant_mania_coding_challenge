@@ -56,8 +56,10 @@ class Simulation
     static void collisionHandler(Graph<nodeType>& colonyMap,
         ColoniesState<nodeType>& coloniesState)
     {
-        // TODO: for INTS instead of hash, map with a vector of vectors.
-        std::unordered_map<ColonyIdType, std::vector<int>> htAntPos;
+        // vector of vectors is problematic when there is a small number of ants
+        // and large number of colonies.
+        // The constructor preallocates memory.
+        std::unordered_map<ColonyIdType, std::vector<int>> htAntPos(coloniesState.aliveAnts);
         auto aliveAnts = coloniesState.vAnts | std::ranges::views::filter([](const Ant<nodeType>& ant){
                 return ant.alive;
         });
@@ -78,6 +80,7 @@ class Simulation
                 else
                 {
                     colonyNameStr = colonyName;
+                    colonyMap.htNodes[colonyName]->colonyAlive = false;
                 }
                 CUSTOM_LOG("FIGHTING DESTRUCTION: ");
                 for (auto antId: ants)
@@ -101,9 +104,10 @@ class Simulation
 
         for (auto& ant: aliveAnts)
         {
-            std::vector<ColonyIdType> vPotentialColonies;
             // Reserve capacity to prevent allocations.
+            std::vector<ColonyIdType> vPotentialColonies;
             vPotentialColonies.reserve(GlobalConsts::MAX_NUM_DIRS);
+
             if constexpr (nodeType == NodeType::NodeNaive || nodeType == NodeType::NodeOptAdjEdges)
             {
                 // htAdj doesn't have an order for keys, while

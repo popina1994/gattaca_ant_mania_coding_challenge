@@ -74,6 +74,11 @@ struct Graph
         return *this;
     }
 
+    uint32_t getNumColonies(void)
+    {
+        return htNodes.size();
+    }
+
     ~Graph()
     {
         for (auto [nodeName, node]: htNodes)
@@ -81,6 +86,8 @@ struct Graph
             delete node;
         }
     }
+
+
 };
 
 template<>
@@ -88,7 +95,7 @@ struct Graph<NodeType::NodeOptColonyNamesInts>
 {
     std::vector<Node<NodeType::NodeOptColonyNamesInts>> vNodes;
     std::vector<std::string> vColonyNames;
-    static constexpr uint32_t MAX_NUM_DIRS = 4;
+    static constexpr uint32_t MAX_NUM_DIRS = GlobalConsts::MAX_NUM_DIRS;
     Graph() = default;
 
     void copyNode(const Graph<NodeType::NodeOptColonyNamesInts>& other)
@@ -130,6 +137,11 @@ struct Graph<NodeType::NodeOptColonyNamesInts>
         copyNode(other);
 
         return *this;
+    }
+
+    uint32_t getNumColonies(void)
+    {
+        return vNodes.size();
     }
 
     ~Graph()

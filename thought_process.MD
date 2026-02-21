@@ -73,7 +73,7 @@ Node
 }
 ```
 
-5. Optimization 3, use cache align each of the nodes to not cause??
+5. Optimization 3, use cache align each of the nodes to not cause overlaps??
 6. Optimization 4, try to see what is happening if we remove nodes corresponding to destroyed colonies.
 
 ### Data structure to simulate ants
