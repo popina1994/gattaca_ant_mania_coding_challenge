@@ -19,24 +19,25 @@ class Simulation
 
     using ColonyIdType =
             std::conditional_t <
-            FlatNodeType<nodeType>,
+            GraphNamesVector<graphType>,
             uint32_t, std::string>;
 
-    static void initializeAntsInner(const Graph<graphType, nodeType>& colonies,
+
+    static void initializeAntsInner(const Graph<graphType, nodeType>& colonyMap,
     ColoniesState<nodeType>& coloniesState, uint32_t seed)
     {
         std::vector<ColonyIdType> vColonyNames;
-        if constexpr (FlatNodeType<nodeType>)
+        if constexpr (GraphAdjacencyListOpt<graphType>)
         {
-            auto keyView = colonies.vNodes;
-            for (const auto& node: colonies.vNodes)
+            auto keyView = colonyMap.vNodes;
+            for (const auto& node: colonyMap.vNodes)
             {
                 vColonyNames.push_back(node.colonyName);
             }
         }
         else
         {
-            auto keyView = colonies.htNodes | std::views::keys;
+            auto keyView = colonyMap.htNodes | std::views::keys;
             vColonyNames.assign(keyView.begin(), keyView.end());
         }
 
@@ -52,6 +53,7 @@ class Simulation
             ant.colonyName = vColonyNames[colonyIdx];
         }
     }
+
 
     static void collisionHandler(Graph<graphType, nodeType>& colonyMap,
         ColoniesState<nodeType>& coloniesState)
@@ -72,16 +74,28 @@ class Simulation
             if (ants.size() > 1) [[unlikely]]
             {
                 std::string_view colonyNameStr;
-                if constexpr (FlatNodeType<nodeType>)
+                if constexpr (GraphNamesVector<graphType>)
                 {
                     colonyNameStr = colonyMap.vColonyNames[colonyName];
-                    colonyMap.vNodes[colonyName].colonyAlive = false;
                 }
                 else
                 {
                     colonyNameStr = colonyName;
+                }
+
+                if constexpr (GraphAdjacencyListOpt<graphType>)
+                {
+                    colonyMap.vNodes[colonyName].colonyAlive = false;
+                }
+                else if constexpr (graphType == GraphType::GraphAdjacencyListMapNameNode)
+                {
                     colonyMap.htNodes[colonyName]->colonyAlive = false;
                 }
+                else if constexpr (graphType == GraphType::GraphAdjacencyListMapNameNodeOpt)
+                {
+                    colonyMap.htNodes.erase(colonyName);
+                }
+
                 CUSTOM_LOG("FIGHTING DESTRUCTION: ");
                 for (auto antId: ants)
                 {
@@ -95,6 +109,7 @@ class Simulation
             }
         }
     }
+
 
     static void antsMove(const Graph<graphType, nodeType>& colonyMap, ColoniesState<nodeType>& coloniesState, RandomGenerator& randomGenerator)
     {
@@ -142,7 +157,7 @@ class Simulation
                     }
                 }
             }
-            else if constexpr (FlatNodeType<nodeType>)
+            else if constexpr (GraphAdjacencyListOpt<graphType>)
             {
                 for (const auto& adjColony: colonyMap.vNodes[ant.colonyName].vAdj)
                 {
@@ -152,10 +167,31 @@ class Simulation
                     }
                 }
             }
+            else if constexpr (graphType == GraphType::GraphAdjacencyListMapNameNodeOpt)
+            {
+                for (auto& adjColony: colonyMap.htNodes.at(ant.colonyName)->vAdj)
+                {
+                    if (adjColony != nullptr && colonyMap.htNodes.contains(adjColony->colonyName))
+                    {
+                        vPotentialColonies.push_back(adjColony->colonyName);
+                    }
+                    else
+                    {
+                        adjColony = nullptr;
+                    }
+                }
+            }
 
             if (vPotentialColonies.empty())
             {
-                CUSTOM_LOG(ant.id, " ISOLATED ", ant.colonyName);
+                if constexpr (GraphNamesVector<graphType>)
+                {
+                    CUSTOM_LOG(ant.id, " ISOLATED ", colonyMap.vColonyNames[ant.colonyName]);
+                }
+                else if constexpr (GraphNamesMap<graphType>)
+                {
+                    CUSTOM_LOG(ant.id, " ISOLATED ", ant.colonyName);
+                }
                 CUSTOM_LOG_ENDL
                 continue;
             }
@@ -180,10 +216,10 @@ class Simulation
         CUSTOM_LOG_ENDL;
     }
 
+
     static void simulateInner(Graph<graphType, nodeType>& colonyMap, ColoniesState<nodeType>& coloniesState, RandomGenerator& randomGenerator)
     {
         static constexpr uint32_t NUM_STEPS = 10'000;
-        // static constexpr uint32_t NUM_STEPS = 100;
         for (int step = 0; step < NUM_STEPS && coloniesState.aliveAnts > 0; step++)
         {
             CUSTOM_LOG("STEP ", step);
@@ -194,6 +230,7 @@ class Simulation
         }
         collisionHandler(colonyMap, coloniesState);
     }
+
 
 public:
     Simulation(uint32_t numAnts, uint32_t _seed): coloniesStateOriginal(numAnts),

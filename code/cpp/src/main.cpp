@@ -79,6 +79,12 @@ int main(int argc, char* argv[])
         case 4:
         evaluateExperiment<GraphType::GraphAdjacencyListVectorNameNode, NodeType::NodeOptColonyNamesIntsAligned>(seed, numAnts, colonyFileName);
         break;
+        case 5:
+        evaluateExperiment<GraphType::GraphAdjacencyListMapNameNodeOpt, NodeType::NodeOptColonyNamesInts>(seed, numAnts, colonyFileName);
+        break;
+        case 6:
+        evaluateExperiment<GraphType::GraphAdjacencyListMapNameNodeOpt, NodeType::NodeOptColonyNamesIntsAligned>(seed, numAnts, colonyFileName);
+        break;
         default:
             std::cerr << "Invalid optimization level: " << optimizationLevel << "\n";
             return 1;

@@ -74,7 +74,7 @@ Node
 ```
 
 5. Optimization 3, use cache align each of the nodes to not cause overlaps??
-6. Optimization 4, try to see what is happening if we remove nodes corresponding to destroyed colonies.
+6. Optimization 4, try to see what is happening if we remove nodes corresponding to destroyed colonies. So, when deeper thinking about this optimization, the goal is to access how fast the colonies would be destroyed depending on the number of ants and then use right data structure.
 
 ### Data structure to simulate ants
 

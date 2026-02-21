@@ -9,6 +9,21 @@ enum class  GraphType
     GraphAdjacencyListVectorNameNode,
 };
 
+template<GraphType graphType>
+concept GraphNamesMap = graphType == GraphType::GraphAdjacencyListMapNameNode;
+
+
+template<GraphType graphType>
+concept GraphNamesVector = (graphType == GraphType::GraphAdjacencyListVectorNameNode) || (graphType == GraphType::GraphAdjacencyListMapNameNodeOpt);
+
+
+template<GraphType graphType>
+concept GraphAdjacencyList = graphType == GraphType::GraphAdjacencyListMapNameNode || graphType == GraphType::GraphAdjacencyListMapNameNodeOpt;
+
+template<GraphType graphType>
+concept GraphAdjacencyListOpt = graphType == GraphType::GraphAdjacencyListVectorNameNode;
+
+
 
 template<GraphType graphType, NodeType nodeType>
 struct Graph;
@@ -33,6 +48,7 @@ struct Graph<GraphType::GraphAdjacencyListMapNameNode, nodeType>
             htNodes[nodeName] = new Node<nodeType>(node->colonyName);
         }
 
+
         if constexpr (nodeType == NodeType::NodeNaive || nodeType == NodeType::NodeOptAdjEdges)
         {
             for (const auto& [nodeName, node]: other.htNodes)
@@ -47,7 +63,7 @@ struct Graph<GraphType::GraphAdjacencyListMapNameNode, nodeType>
                 }
                 else if constexpr (nodeType == NodeType::NodeOptAdjEdges)
                 {
-                    for (int idx = 0; idx < MAX_NUM_DIRS; idx++)
+                    for (uint32_t idx = 0; idx < MAX_NUM_DIRS; idx++)
                     {
                         auto [dir, adjNode] = node->htAdj[idx];
                         if (adjNode == nullptr) {continue;}
@@ -61,8 +77,7 @@ struct Graph<GraphType::GraphAdjacencyListMapNameNode, nodeType>
             for (const auto& [nodeName, node]: other.htNodes)
             {
                 *htNodes[nodeName] = *node;
-                htNodes[nodeName]->colonyAlive = node->colonyAlive;
-                for (int idx = 0; idx < MAX_NUM_DIRS; idx++)
+                for (uint32_t idx = 0; idx < MAX_NUM_DIRS; idx++)
                 {
                     const auto& adjNode = node->vAdj[idx];
                     if (adjNode == nullptr) {continue;}
@@ -105,6 +120,75 @@ struct Graph<GraphType::GraphAdjacencyListMapNameNode, nodeType>
 };
 
 
+template<NodeType nodeType>
+requires FlatNodeType<nodeType>
+struct Graph<GraphType::GraphAdjacencyListMapNameNodeOpt, nodeType>
+{
+    static constexpr uint32_t MAX_NUM_DIRS = GlobalConsts::MAX_NUM_DIRS;
+
+    static constexpr GraphType selfGraphType =
+    GraphType::GraphAdjacencyListMapNameNodeOpt;
+    std::unordered_map<uint32_t, Node<nodeType>*> htNodes;
+    std::vector<std::string> vColonyNames;
+
+    Graph() = default;
+
+    void copyNode(const Graph<selfGraphType, nodeType>& other)
+    {
+        for (const auto& [nodeName, node]: other.htNodes)
+        {
+            htNodes[nodeName] = new Node<nodeType>(node->colonyName);
+        }
+        vColonyNames = other.vColonyNames;
+
+        uint32_t idxNode = 0;
+        for (const auto& [nodeName, node]: other.htNodes)
+        {
+            *htNodes[nodeName] = *node;
+            for (uint32_t idx = 0; idx < MAX_NUM_DIRS; idx++)
+            {
+                const auto& adjNode = node->vAdj[idx];
+                if (node->vAdj[idx] == nullptr) {continue;}
+                htNodes[nodeName]->vAdj[idx] = htNodes[adjNode->colonyName];
+            }
+            idxNode++;
+        }
+    }
+
+    Graph(const Graph& other)
+    {
+        copyNode(other);
+    }
+
+    Graph& operator=(const Graph& other)
+    {
+        for (auto [nodeName, node]: htNodes)
+        {
+            delete node;
+        }
+        htNodes.clear();
+
+        copyNode(other);
+
+        return *this;
+    }
+
+    uint32_t getNumColonies(void)
+    {
+        return htNodes.size();
+    }
+
+    ~Graph()
+    {
+        for (auto [nodeName, node]: htNodes)
+        {
+            delete node;
+        }
+    }
+};
+
+
+
 template<NodeType flatNodeType>
 requires FlatNodeType<flatNodeType>
 struct Graph<GraphType::GraphAdjacencyListVectorNameNode, flatNodeType>
@@ -124,15 +208,11 @@ struct Graph<GraphType::GraphAdjacencyListVectorNameNode, flatNodeType>
             // copies all fields including pointers, but we will overwrite pointers
             vNodes[i] = other.vNodes[i];
         }
-        vColonyNames.resize(other.vColonyNames.size());
-        for (size_t i = 0; i < other.vColonyNames.size(); i++)
-        {
-            vColonyNames[i] = other.vColonyNames[i];
-        }
-        int idxNode = 0;
+        vColonyNames = other.vColonyNames;
+        uint32_t idxNode = 0;
         for (const auto& node: other.vNodes)
         {
-            for (int idx = 0; idx < MAX_NUM_DIRS; idx++)
+            for (uint32_t idx = 0; idx < MAX_NUM_DIRS; idx++)
             {
                 const auto& adjNode = node.vAdj[idx];
                 if (node.vAdj[idx] == nullptr) {continue;}
@@ -193,22 +273,29 @@ bool readColonyMap(const std::string& colonyMapFileName, Graph<graphType, nodeTy
     std::string line;
     std::unordered_map<std::string,
         std::vector<std::pair<std::string, std::string>>> htDirColony;
-    std::unordered_map<std::string, int> htColonyNameToIdx;
+    std::unordered_map<std::string, uint32_t> htColonyNameToIdx;
 
-    for (int cntLine = 0; std::getline(colonyMapFile, line); cntLine++)
+    for (uint32_t cntLine = 0; std::getline(colonyMapFile, line); cntLine++)
     {
         auto splitRange = line | std::views::split(' ');
         auto subRangesIt = splitRange.begin();
         std::string curColonyName = std::ranges::to<std::string>(*subRangesIt);
-        if constexpr (FlatNodeType<nodeType>)
+        if constexpr (GraphNamesVector<graphType>)
         {
             colonyMap.vColonyNames.push_back(curColonyName);
-            colonyMap.vNodes.push_back(Node<nodeType>(cntLine));
             htColonyNameToIdx[curColonyName] = cntLine;
         }
-        else
+        if constexpr (graphType == GraphType::GraphAdjacencyListMapNameNode)
         {
             colonyMap.htNodes[curColonyName] = new Node<nodeType>(curColonyName);
+        }
+        else if constexpr (graphType == GraphType::GraphAdjacencyListMapNameNodeOpt)
+        {
+            colonyMap.htNodes[cntLine] = new Node<nodeType>(cntLine);
+        }
+        else if constexpr (graphType == GraphType::GraphAdjacencyListVectorNameNode)
+        {
+            colonyMap.vNodes.push_back(Node<nodeType>(cntLine));
         }
         htDirColony[curColonyName] = {};
         CUSTOM_LOG("CUR COLONY NAME", curColonyName);
@@ -223,25 +310,35 @@ bool readColonyMap(const std::string& colonyMapFileName, Graph<graphType, nodeTy
         CUSTOM_LOG_ENDL;
     }
 
-    static const std::unordered_map<std::string, int> dirToIdx = {{"north", 0}, {"south", 1}, {"east", 2}, {"west", 3}};
-    if constexpr (FlatNodeType<nodeType>)
+    static const std::unordered_map<std::string, uint32_t> dirToIdx = {{"north", 0}, {"south", 1}, {"east", 2}, {"west", 3}};
+    if constexpr (GraphNamesVector<graphType>)
     {
-        int idxColony = 0;
-        for (auto& curColonyName: colonyMap.vColonyNames)
+        uint32_t idxColony = 0;
+        for (const auto& curColonyName: colonyMap.vColonyNames)
         {
-            for (auto& [adjColonyDir, adjColonyName]: htDirColony[curColonyName])
+            for (const auto& [adjColonyDir, adjColonyName]: htDirColony[curColonyName])
             {
-                int dirIdx = dirToIdx.at(adjColonyDir);
-                colonyMap.vNodes[idxColony].vAdj[dirIdx] = &colonyMap.vNodes[htColonyNameToIdx[adjColonyName]];
+
+                uint32_t dirIdx = dirToIdx.at(adjColonyDir);
+                if constexpr (graphType == GraphType::GraphAdjacencyListVectorNameNode)
+                {
+                    colonyMap.vNodes[idxColony].vAdj[dirIdx] = &colonyMap.vNodes[htColonyNameToIdx[adjColonyName]];
+                }
+                else if constexpr (graphType == GraphType::GraphAdjacencyListMapNameNodeOpt)
+                {
+
+                    colonyMap.htNodes[idxColony]->vAdj[dirIdx] = colonyMap.htNodes[htColonyNameToIdx[adjColonyName]];
+                }
+                CUSTOM_LOG("Setting adj for ", curColonyName, " in direction ", adjColonyDir, " ", adjColonyName);
             }
             idxColony++;
         }
     }
     else
     {
-        for (auto& [curColonyName, vAdjDirColonyNames]: htDirColony)
+        for (const auto& [curColonyName, vAdjDirColonyNames]: htDirColony)
         {
-            for (auto& [adjColonyDir, adjColonyName]: vAdjDirColonyNames)
+            for (const auto& [adjColonyDir, adjColonyName]: vAdjDirColonyNames)
             {
                 if constexpr (nodeType == NodeType::NodeNaive)
                 {
@@ -249,19 +346,15 @@ bool readColonyMap(const std::string& colonyMapFileName, Graph<graphType, nodeTy
                 }
                 else if constexpr (nodeType == NodeType::NodeOptAdjEdges)
                 {
-                    int dirIdx = dirToIdx.at(adjColonyDir);
+                    uint32_t dirIdx = dirToIdx.at(adjColonyDir);
                     colonyMap.htNodes[curColonyName]->htAdj[dirIdx] = {adjColonyDir, colonyMap.htNodes[adjColonyName]};
                 }
                 else if constexpr (nodeType == NodeType::NodeOptAdjEdgesNameRemoved)
                 {
-                    int dirIdx = dirToIdx.at(adjColonyDir);
+                    uint32_t dirIdx = dirToIdx.at(adjColonyDir);
                     colonyMap.htNodes[curColonyName]->vAdj[dirIdx] = colonyMap.htNodes[adjColonyName];
                 }
-                else if constexpr (FlatNodeType<nodeType>)
-                {
-                    int dirIdx = dirToIdx.at(adjColonyDir);
-                    colonyMap.vNodes[curColonyName]->vAdj[dirIdx] = colonyMap.htNodes[adjColonyName];
-                }
+                CUSTOM_LOG("Setting adj for ", curColonyName, " in direction ", adjColonyDir, " ", adjColonyName);
             }
         }
     }
