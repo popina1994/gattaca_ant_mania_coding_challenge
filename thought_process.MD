@@ -111,7 +111,7 @@ We do not count towards simulation latency the time to load and initialize the g
 The biggest bottleneck will be on simulating ant movements and collision detection.
 
 ## Profiling
-I used AMD profiled to see further microoptimizations
+I used AMD profiler to see the bottlenecks in my code for further microoptimizations
 -memory allocation/deallocation reuse the pool
 -branching (a little bit)
 -caching

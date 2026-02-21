@@ -14,8 +14,8 @@ num_ants=(2000)
 
 #seeds=(1 4 42)
 seeds=(1)
-# optimization_level=(0 1 2 3 4 5 6)
-optimization_level=(3 7 8)
+optimization_level=(0 1 2 3 4 5 6 7 8)
+# optimization_level=(3 7 8)
 # optimization_level=(0 5)
 # optimization_level=(5 6)
 

@@ -97,64 +97,16 @@ class Simulation
         for (auto& ant: aliveAnts)
         {
             vPotentialColonies.clear();
-            if constexpr (nodeType == NodeType::NodeNaive || nodeType == NodeType::NodeOptAdjEdges)
-            {
-                // htAdj doesn't have an order for keys, while
-                // vector of pairs always has a fixed order, thus
-                // these two will not produce the order. Is there
-                // a defaultdict in C++?
-                for (const auto& [adjDir, adjColony]: colonyMap.htNodes.at(ant.colonyName)->htAdj)
-                {
-                    if constexpr (nodeType == NodeType::NodeNaive)
-                    {
-                        if (colonyMap.htNodes.at(adjColony->colonyName)->colonyAlive)
-                        {
-                            vPotentialColonies.push_back(adjColony->colonyName);
-                        }
-                    }
-                    else if constexpr (nodeType == NodeType::NodeOptAdjEdges)
-                    {
-                        if (adjColony != nullptr && adjColony->colonyAlive)
-                        {
-                            vPotentialColonies.push_back(adjColony->colonyName);
-                        }
-                    }
-                }
-            }
-            else  if constexpr (nodeType == NodeType::NodeOptAdjEdgesNameRemoved)
-            {
-                for (const auto& adjColony: colonyMap.htNodes.at(ant.colonyName)->vAdj)
-                {
-                    if (adjColony != nullptr && adjColony->colonyAlive)
-                    {
-                        vPotentialColonies.push_back(adjColony->colonyName);
-                    }
-                }
-            }
-            else if constexpr (GraphAdjacencyListOpt<graphType>)
-            {
-                for (const auto& adjColony: colonyMap.vNodes[ant.colonyName].vAdj)
-                {
-                    if (adjColony != nullptr && adjColony->colonyAlive)
-                    {
-                        vPotentialColonies.push_back(adjColony->colonyName);
-                    }
-                }
-            }
-            else if constexpr (graphType == GraphType::GraphAdjacencyListMapNameNodeOpt)
-            {
-                for (auto& adjColony: colonyMap.htNodes.at(ant.colonyName)->vAdj)
-                {
-                    if (adjColony != nullptr && colonyMap.htNodes.contains(adjColony->colonyName))
-                    {
-                        vPotentialColonies.push_back(adjColony->colonyName);
-                    }
-                    else if (adjColony != nullptr)
-                    {
-                        adjColony = nullptr;
-                    }
-                }
-            }
+             // htAdj doesn't have an order for keys, while
+            // vector of pairs always has a fixed order, thus
+            // these two will not produce the order.
+            auto adjacentColonies = colonyMap.adjacentColonies(ant.colonyName);
+            auto adjColNames = adjacentColonies
+            | std::views::transform
+            ([](auto* node)-> ColonyIdType& {
+                return node->colonyName;
+            });
+            std::ranges::copy(adjColNames, std::back_inserter(vPotentialColonies));
 
             if (vPotentialColonies.empty())
             {

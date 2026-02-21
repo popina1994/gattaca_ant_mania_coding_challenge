@@ -45,7 +45,6 @@ struct Graph<GraphType::GraphAdjacencyListMapNameNode, nodeType>
             htNodes[nodeName] = new Node<nodeType>(node->colonyName);
         }
 
-
         if constexpr (nodeType == NodeType::NodeNaive || nodeType == NodeType::NodeOptAdjEdges)
         {
             for (const auto& [nodeName, node]: other.htNodes)
@@ -111,6 +110,42 @@ struct Graph<GraphType::GraphAdjacencyListMapNameNode, nodeType>
     void colonyDeath(const ColonyIdType& colonyName)
     {
         htNodes[colonyName]->colonyAlive = false;
+    }
+
+    auto adjacentColonies(const ColonyIdType& colonyName) const
+    {
+        if constexpr (nodeType == NodeType::NodeNaive)
+        {
+            return htNodes.at(colonyName)->htAdj
+            | std::views::values
+            | std::views::filter
+            ([](const auto* adjColony)
+            {
+                return adjColony->colonyAlive;
+            });
+        }
+        else if constexpr (nodeType == NodeType::NodeOptAdjEdges)
+        {
+            return htNodes.at(colonyName)->htAdj
+            | std::views::filter
+            ([](const auto& pair)
+            {
+                return pair.second != nullptr && pair.second->colonyAlive;
+            })
+            | std::views::transform
+            ([](const auto& pair)
+            {
+                return pair.second;
+            });
+        }
+        else if constexpr (nodeType == NodeType::NodeOptAdjEdgesNameRemoved)
+        {
+            return htNodes.at(colonyName)->vAdj | std::views::filter
+            ([](const auto* adjColony)
+            {
+                return adjColony != nullptr && adjColony->colonyAlive;
+            });
+        }
     }
 
     ~Graph()
@@ -188,6 +223,16 @@ struct Graph<GraphType::GraphAdjacencyListMapNameNodeOpt, nodeType>
         htNodes.erase(colonyName);
     }
 
+    auto adjacentColonies(const ColonyIdType& colonyName) const
+    {
+        return htNodes.at(colonyName)->vAdj
+        | std::views::filter
+        ([this](const auto* adjColony)
+        {
+            return adjColony != nullptr && this->htNodes.contains(adjColony->colonyName);
+        });
+    }
+
     ~Graph()
     {
         for (auto [nodeName, node]: htNodes)
@@ -257,6 +302,16 @@ struct Graph<GraphType::GraphAdjacencyListVectorNameNode, flatNodeType>
     void colonyDeath(const ColonyIdType& colonyName)
     {
         vNodes[colonyName].colonyAlive = false;
+    }
+
+    auto adjacentColonies(const ColonyIdType& colonyName) const
+    {
+        return vNodes[colonyName].vAdj
+        | std::views::filter
+        ([](const auto* adjColony)
+        {
+            return adjColony != nullptr && adjColony->colonyAlive;
+        });
     }
 
 
