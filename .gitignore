@@ -1,5 +1,6 @@
 code/cpp/main_session.uprof
 code/cpp/output_dir
+*build*
 *.png
 *.dot
 *.out

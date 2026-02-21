@@ -6,13 +6,13 @@
 // reset()
 // simulate()
 //
-template <NodeType nodeType>
+template <GraphType graphType, NodeType nodeType>
 class Simulation
 {
-    Graph<nodeType> colonyMapOriginal;
+    Graph<graphType, nodeType> colonyMapOriginal;
     ColoniesState<nodeType> coloniesStateOriginal;
     ColoniesState<nodeType> coloniesState;
-    Graph<nodeType> colonyMap;
+    Graph<graphType, nodeType> colonyMap;
 
     RandomGenerator randomGenerator;
     uint32_t seed;
@@ -22,7 +22,7 @@ class Simulation
             FlatNodeType<nodeType>,
             uint32_t, std::string>;
 
-    static void initializeAntsInner(const Graph<nodeType>& colonies,
+    static void initializeAntsInner(const Graph<graphType, nodeType>& colonies,
     ColoniesState<nodeType>& coloniesState, uint32_t seed)
     {
         std::vector<ColonyIdType> vColonyNames;
@@ -53,7 +53,7 @@ class Simulation
         }
     }
 
-    static void collisionHandler(Graph<nodeType>& colonyMap,
+    static void collisionHandler(Graph<graphType, nodeType>& colonyMap,
         ColoniesState<nodeType>& coloniesState)
     {
         // vector of vectors is problematic when there is a small number of ants
@@ -96,7 +96,7 @@ class Simulation
         }
     }
 
-    static void antsMove(const Graph<nodeType>& colonyMap, ColoniesState<nodeType>& coloniesState, RandomGenerator& randomGenerator)
+    static void antsMove(const Graph<graphType, nodeType>& colonyMap, ColoniesState<nodeType>& coloniesState, RandomGenerator& randomGenerator)
     {
         auto aliveAnts = coloniesState.vAnts | std::ranges::views::filter([](Ant<nodeType>& ant){
                 return ant.alive;
@@ -180,7 +180,7 @@ class Simulation
         CUSTOM_LOG_ENDL;
     }
 
-    static void simulateInner(Graph<nodeType>& colonyMap, ColoniesState<nodeType>& coloniesState, RandomGenerator& randomGenerator)
+    static void simulateInner(Graph<graphType, nodeType>& colonyMap, ColoniesState<nodeType>& coloniesState, RandomGenerator& randomGenerator)
     {
         static constexpr uint32_t NUM_STEPS = 10'000;
         // static constexpr uint32_t NUM_STEPS = 100;

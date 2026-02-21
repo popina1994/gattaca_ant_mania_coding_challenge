@@ -1,11 +1,11 @@
 #include "simulate.h"
 
-template <NodeType nodeType>
+template <GraphType graphType, NodeType nodeType>
 void evaluateExperiment(uint32_t seed, uint32_t numAnts,
         const std::string& colonyFileName)
 {
     uint32_t numRepetitions = 100;
-    Simulation<nodeType> simulation(numAnts, seed);
+    Simulation<graphType, nodeType> simulation(numAnts, seed);
 
     simulation.loadColonyMap(colonyFileName);
     simulation.initializeAnts();
@@ -65,19 +65,19 @@ int main(int argc, char* argv[])
     switch (optimizationLevel)
     {
         case 0:
-        evaluateExperiment<NodeType::NodeNaive>(seed, numAnts, colonyFileName);
+        evaluateExperiment<GraphType::GraphAdjacencyListMapNameNode, NodeType::NodeNaive>(seed, numAnts, colonyFileName);
             break;
         case 1:
-        evaluateExperiment<NodeType::NodeOptAdjEdges>(seed, numAnts, colonyFileName);
+        evaluateExperiment<GraphType::GraphAdjacencyListMapNameNode, NodeType::NodeOptAdjEdges>(seed, numAnts, colonyFileName);
             break;
         case 2:
-        evaluateExperiment<NodeType::NodeOptAdjEdgesNameRemoved>(seed, numAnts, colonyFileName);
+        evaluateExperiment<GraphType::GraphAdjacencyListMapNameNode, NodeType::NodeOptAdjEdgesNameRemoved>(seed, numAnts, colonyFileName);
             break;
         case 3:
-        evaluateExperiment<NodeType::NodeOptColonyNamesInts>(seed, numAnts, colonyFileName);
+        evaluateExperiment<GraphType::GraphAdjacencyListVectorNameNode, NodeType::NodeOptColonyNamesInts>(seed, numAnts, colonyFileName);
         break;
         case 4:
-        evaluateExperiment<NodeType::NodeOptColonyNamesIntsAligned>(seed, numAnts, colonyFileName);
+        evaluateExperiment<GraphType::GraphAdjacencyListVectorNameNode, NodeType::NodeOptColonyNamesIntsAligned>(seed, numAnts, colonyFileName);
         break;
         default:
             std::cerr << "Invalid optimization level: " << optimizationLevel << "\n";

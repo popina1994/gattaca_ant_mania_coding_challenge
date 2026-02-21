@@ -2,19 +2,31 @@
 #include "node.h"
 #pragma once
 
-template<NodeType nodeType>
+enum class  GraphType
+{
+    GraphAdjacencyListMapNameNode,
+    GraphAdjacencyListMapNameNodeOpt,
+    GraphAdjacencyListVectorNameNode,
+};
+
+
+template<GraphType graphType, NodeType nodeType>
 struct Graph;
+
 
 template<NodeType nodeType>
 requires NonFlatNodeType<nodeType>
-struct Graph<nodeType>
+struct Graph<GraphType::GraphAdjacencyListMapNameNode, nodeType>
 {
     static constexpr uint32_t MAX_NUM_DIRS = GlobalConsts::MAX_NUM_DIRS;
+
+    static constexpr GraphType selfGraphType =
+    GraphType::GraphAdjacencyListMapNameNode;
     std::unordered_map<std::string, Node<nodeType>*> htNodes;
 
     Graph() = default;
 
-    void copyNode(const Graph& other)
+    void copyNode(const Graph<selfGraphType, nodeType>& other)
     {
         for (const auto& [nodeName, node]: other.htNodes)
         {
@@ -90,20 +102,21 @@ struct Graph<nodeType>
             delete node;
         }
     }
-
-
 };
+
 
 template<NodeType flatNodeType>
 requires FlatNodeType<flatNodeType>
-struct Graph<flatNodeType>
+struct Graph<GraphType::GraphAdjacencyListVectorNameNode, flatNodeType>
 {
+    static constexpr GraphType selfGraphType =
+    GraphType::GraphAdjacencyListVectorNameNode;
     std::vector<Node<flatNodeType>> vNodes;
     std::vector<std::string> vColonyNames;
     static constexpr uint32_t MAX_NUM_DIRS = GlobalConsts::MAX_NUM_DIRS;
     Graph() = default;
 
-    void copyNode(const Graph<flatNodeType>& other)
+    void copyNode(const Graph<selfGraphType, flatNodeType>& other)
     {
         vNodes.resize(other.vNodes.size());
         for (size_t i = 0; i < other.vNodes.size(); i++)
@@ -167,9 +180,9 @@ splitDirAndColonyName(const std::string& str)
     return {adjColonyDirection, adjColonyName};
 }
 
-template<NodeType nodeType>
+template<GraphType graphType, NodeType nodeType>
 __attribute__((no_instrument_function))
-bool readColonyMap(const std::string& colonyMapFileName, Graph<nodeType>& colonyMap)
+bool readColonyMap(const std::string& colonyMapFileName, Graph<graphType, nodeType>& colonyMap)
 {
     std::ifstream colonyMapFile(colonyMapFileName);
     if (!colonyMapFile) {
