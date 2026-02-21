@@ -19,14 +19,14 @@ class Simulation
 
     using ColonyIdType =
             std::conditional_t <
-            nodeType==NodeType::NodeOptColonyNamesInts,
+            FlatNodeType<nodeType>,
             uint32_t, std::string>;
 
     static void initializeAntsInner(const Graph<nodeType>& colonies,
     ColoniesState<nodeType>& coloniesState, uint32_t seed)
     {
         std::vector<ColonyIdType> vColonyNames;
-        if constexpr (nodeType == NodeType::NodeOptColonyNamesInts)
+        if constexpr (FlatNodeType<nodeType>)
         {
             auto keyView = colonies.vNodes;
             for (const auto& node: colonies.vNodes)
@@ -72,7 +72,7 @@ class Simulation
             if (ants.size() > 1)
             {
                 std::string_view colonyNameStr;
-                if constexpr (nodeType == NodeType::NodeOptColonyNamesInts)
+                if constexpr (FlatNodeType<nodeType>)
                 {
                     colonyNameStr = colonyMap.vColonyNames[colonyName];
                     colonyMap.vNodes[colonyName].colonyAlive = false;
@@ -142,7 +142,7 @@ class Simulation
                     }
                 }
             }
-            else if constexpr (nodeType == NodeType::NodeOptColonyNamesInts)
+            else if constexpr (FlatNodeType<nodeType>)
             {
                 for (const auto& adjColony: colonyMap.vNodes[ant.colonyName].vAdj)
                 {
@@ -164,7 +164,7 @@ class Simulation
             // Spans instead of copies.
             std::string_view prevColonyStr;
             std::string_view curColonyStr;
-            if constexpr (nodeType == NodeType::NodeOptColonyNamesInts)
+            if constexpr (FlatNodeType<nodeType>)
             {
                 prevColonyStr = colonyMap.vColonyNames[prevColony];
                 curColonyStr = colonyMap.vColonyNames[vPotentialColonies[nextColonyIdx]];

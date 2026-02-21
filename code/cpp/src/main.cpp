@@ -76,6 +76,9 @@ int main(int argc, char* argv[])
         case 3:
         evaluateExperiment<NodeType::NodeOptColonyNamesInts>(seed, numAnts, colonyFileName);
         break;
+        case 4:
+        evaluateExperiment<NodeType::NodeOptColonyNamesIntsAligned>(seed, numAnts, colonyFileName);
+        break;
         default:
             std::cerr << "Invalid optimization level: " << optimizationLevel << "\n";
             return 1;

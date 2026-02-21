@@ -1,4 +1,5 @@
 #include "utils.h"
+#include <type_traits>
 #pragma once
 
 enum class  NodeType
@@ -6,8 +7,16 @@ enum class  NodeType
     NodeNaive,
     NodeOptAdjEdges,
     NodeOptAdjEdgesNameRemoved,
-    NodeOptColonyNamesInts
+    NodeOptColonyNamesInts,
+    NodeOptColonyNamesIntsAligned,
 };
+
+template<NodeType nodeType>
+concept NonFlatNodeType = nodeType == NodeType::NodeNaive || nodeType == NodeType::NodeOptAdjEdgesNameRemoved || nodeType == NodeType::NodeOptAdjEdges;
+
+template<NodeType nodeType>
+concept FlatNodeType = (nodeType == NodeType::NodeOptColonyNamesInts) || (nodeType == NodeType::NodeOptColonyNamesIntsAligned);
+
 
 template <NodeType nodeType>
 struct Node;
@@ -68,3 +77,21 @@ struct Node<NodeType::NodeOptColonyNamesInts>
     {
     }
 };
+
+
+template <>
+struct alignas(std::hardware_destructive_interference_size)
+Node<NodeType::NodeOptColonyNamesIntsAligned>
+{
+    using SelfType = Node<NodeType::NodeOptColonyNamesIntsAligned>;
+    static constexpr uint32_t MAX_NUM_DIRS = GlobalConsts::MAX_NUM_DIRS;
+    std::array<SelfType*, MAX_NUM_DIRS> vAdj{};
+    bool colonyAlive = true;
+    uint32_t colonyName;
+    Node(){}
+    Node(uint32_t _colonyName): colonyName(_colonyName)
+    {
+    }
+};
+
+

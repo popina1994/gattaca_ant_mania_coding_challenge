@@ -36,6 +36,21 @@ struct Ant<NodeType::NodeOptColonyNamesInts> {
 
 uint32_t Ant<NodeType::NodeOptColonyNamesInts>::glId = 0;
 
+
+template<>
+struct alignas(std::hardware_destructive_interference_size)
+Ant<NodeType::NodeOptColonyNamesIntsAligned> {
+    uint32_t id;
+    uint32_t colonyName;
+    bool alive;
+
+    static uint32_t glId;
+
+    Ant() : id(glId++), alive(true) {}
+};
+
+uint32_t Ant<NodeType::NodeOptColonyNamesIntsAligned>::glId = 0;
+
 template<NodeType nodeType>
 struct ColoniesState
 {

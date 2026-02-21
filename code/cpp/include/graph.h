@@ -3,7 +3,11 @@
 #pragma once
 
 template<NodeType nodeType>
-struct Graph
+struct Graph;
+
+template<NodeType nodeType>
+requires NonFlatNodeType<nodeType>
+struct Graph<nodeType>
 {
     static constexpr uint32_t MAX_NUM_DIRS = GlobalConsts::MAX_NUM_DIRS;
     std::unordered_map<std::string, Node<nodeType>*> htNodes;
@@ -90,15 +94,16 @@ struct Graph
 
 };
 
-template<>
-struct Graph<NodeType::NodeOptColonyNamesInts>
+template<NodeType flatNodeType>
+requires FlatNodeType<flatNodeType>
+struct Graph<flatNodeType>
 {
-    std::vector<Node<NodeType::NodeOptColonyNamesInts>> vNodes;
+    std::vector<Node<flatNodeType>> vNodes;
     std::vector<std::string> vColonyNames;
     static constexpr uint32_t MAX_NUM_DIRS = GlobalConsts::MAX_NUM_DIRS;
     Graph() = default;
 
-    void copyNode(const Graph<NodeType::NodeOptColonyNamesInts>& other)
+    void copyNode(const Graph<flatNodeType>& other)
     {
         vNodes.resize(other.vNodes.size());
         for (size_t i = 0; i < other.vNodes.size(); i++)
@@ -182,10 +187,10 @@ bool readColonyMap(const std::string& colonyMapFileName, Graph<nodeType>& colony
         auto splitRange = line | std::views::split(' ');
         auto subRangesIt = splitRange.begin();
         std::string curColonyName = std::ranges::to<std::string>(*subRangesIt);
-        if constexpr (nodeType == NodeType::NodeOptColonyNamesInts)
+        if constexpr (FlatNodeType<nodeType>)
         {
             colonyMap.vColonyNames.push_back(curColonyName);
-            colonyMap.vNodes.push_back(Node<NodeType::NodeOptColonyNamesInts>(cntLine));
+            colonyMap.vNodes.push_back(Node<nodeType>(cntLine));
             htColonyNameToIdx[curColonyName] = cntLine;
         }
         else
@@ -206,7 +211,7 @@ bool readColonyMap(const std::string& colonyMapFileName, Graph<nodeType>& colony
     }
 
     static const std::unordered_map<std::string, int> dirToIdx = {{"north", 0}, {"south", 1}, {"east", 2}, {"west", 3}};
-    if constexpr (nodeType == NodeType::NodeOptColonyNamesInts)
+    if constexpr (FlatNodeType<nodeType>)
     {
         int idxColony = 0;
         for (auto& curColonyName: colonyMap.vColonyNames)
@@ -239,7 +244,7 @@ bool readColonyMap(const std::string& colonyMapFileName, Graph<nodeType>& colony
                     int dirIdx = dirToIdx.at(adjColonyDir);
                     colonyMap.htNodes[curColonyName]->vAdj[dirIdx] = colonyMap.htNodes[adjColonyName];
                 }
-                else if constexpr (nodeType == NodeType::NodeOptColonyNamesInts)
+                else if constexpr (FlatNodeType<nodeType>)
                 {
                     int dirIdx = dirToIdx.at(adjColonyDir);
                     colonyMap.vNodes[curColonyName]->vAdj[dirIdx] = colonyMap.htNodes[adjColonyName];

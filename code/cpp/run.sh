@@ -14,7 +14,7 @@ num_ants=(400)
 
 #seeds=(1 4 42)
 seeds=(1)
-optimization_level=(0 1 2 3)
+optimization_level=(0 1 2 3 4)
 # optimization_level=(0 3)
 
 for dataset in "${datasets[@]}"; do
