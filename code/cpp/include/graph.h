@@ -41,7 +41,7 @@ struct Graph<GraphType::GraphAdjacencyListMapNameNode, nodeType>
 
     Graph() = default;
 
-    void copyNode(const Graph<selfGraphType, nodeType>& other)
+    void copyFrom(const Graph<selfGraphType, nodeType>& other)
     {
         for (const auto& [nodeName, node]: other.htNodes)
         {
@@ -89,18 +89,19 @@ struct Graph<GraphType::GraphAdjacencyListMapNameNode, nodeType>
 
     Graph(const Graph& other)
     {
-        copyNode(other);
+        copyFrom(other);
     }
 
     Graph& operator=(const Graph& other)
     {
+        if (this == &other) {return *this;}
         for (auto [nodeName, node]: htNodes)
         {
             delete node;
         }
         htNodes.clear();
 
-        copyNode(other);
+        copyFrom(other);
 
         return *this;
     }
@@ -133,7 +134,7 @@ struct Graph<GraphType::GraphAdjacencyListMapNameNodeOpt, nodeType>
 
     Graph() = default;
 
-    void copyNode(const Graph<selfGraphType, nodeType>& other)
+    void copyFrom(const Graph<selfGraphType, nodeType>& other)
     {
         for (const auto& [nodeName, node]: other.htNodes)
         {
@@ -157,18 +158,19 @@ struct Graph<GraphType::GraphAdjacencyListMapNameNodeOpt, nodeType>
 
     Graph(const Graph& other)
     {
-        copyNode(other);
+        copyFrom(other);
     }
 
     Graph& operator=(const Graph& other)
     {
+        if (this == &other) {return *this;}
         for (auto [nodeName, node]: htNodes)
         {
             delete node;
         }
         htNodes.clear();
 
-        copyNode(other);
+        copyFrom(other);
 
         return *this;
     }
@@ -200,7 +202,7 @@ struct Graph<GraphType::GraphAdjacencyListVectorNameNode, flatNodeType>
     static constexpr uint32_t MAX_NUM_DIRS = GlobalConsts::MAX_NUM_DIRS;
     Graph() = default;
 
-    void copyNode(const Graph<selfGraphType, flatNodeType>& other)
+    void copyFrom(const Graph<selfGraphType, flatNodeType>& other)
     {
         vNodes.resize(other.vNodes.size());
         for (size_t i = 0; i < other.vNodes.size(); i++)
@@ -224,15 +226,16 @@ struct Graph<GraphType::GraphAdjacencyListVectorNameNode, flatNodeType>
 
     Graph(const Graph& other)
     {
-        copyNode(other);
+        copyFrom(other);
     }
 
     Graph& operator=(const Graph& other)
     {
+        if (this == &other) {return *this;}
         vNodes.clear();
         vColonyNames.clear();
 
-        copyNode(other);
+        copyFrom(other);
 
         return *this;
     }

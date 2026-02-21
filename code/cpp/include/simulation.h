@@ -3,15 +3,12 @@
 
 #pragma once
 
-// reset()
-// simulate()
-//
-template <GraphType graphType, NodeType nodeType>
+template <GraphType graphType, ColoniesStateType coloniesStateType, NodeType nodeType>
 class Simulation
 {
     Graph<graphType, nodeType> colonyMapOriginal;
-    ColoniesState<nodeType> coloniesStateOriginal;
-    ColoniesState<nodeType> coloniesState;
+    ColoniesState<coloniesStateType, nodeType> coloniesStateOriginal;
+    ColoniesState<coloniesStateType, nodeType> coloniesState;
     Graph<graphType, nodeType> colonyMap;
 
     RandomGenerator randomGenerator;
@@ -24,7 +21,7 @@ class Simulation
 
 
     static void initializeAntsInner(const Graph<graphType, nodeType>& colonyMap,
-    ColoniesState<nodeType>& coloniesState, uint32_t seed)
+    ColoniesState<coloniesStateType, nodeType>& coloniesState, uint32_t seed)
     {
         std::vector<ColonyIdType> vColonyNames;
         if constexpr (GraphAdjacencyListOpt<graphType>)
@@ -43,28 +40,19 @@ class Simulation
 
         int numColonies = vColonyNames.size();
 
-        std::mt19937 gen(seed);
-        std::uniform_int_distribution<> dist(0, numColonies-1);
-
-        for (auto& ant: coloniesState.vAnts)
-        {
-            ant.alive = true;
-            int colonyIdx = dist(gen);
-            ant.colonyName = vColonyNames[colonyIdx];
-        }
+        coloniesState.initializeAnts(vColonyNames, seed);
     }
 
 
     static void collisionHandler(Graph<graphType, nodeType>& colonyMap,
-        ColoniesState<nodeType>& coloniesState)
+        ColoniesState<coloniesStateType, nodeType>& coloniesState)
     {
         // vector of vectors is problematic when there is a small number of ants
         // and large number of colonies.
         // The constructor preallocates memory.
         std::unordered_map<ColonyIdType, std::vector<int>> htAntPos(coloniesState.aliveAnts);
-        auto aliveAnts = coloniesState.vAnts | std::ranges::views::filter([](const Ant<nodeType>& ant){
-                return ant.alive;
-        });
+        auto aliveAnts = coloniesState.liveAntsVector();
+
         for (const auto& ant: aliveAnts)
         {
             htAntPos[ant.colonyName].push_back(ant.id);
@@ -99,23 +87,20 @@ class Simulation
                 CUSTOM_LOG("FIGHTING DESTRUCTION: ");
                 for (auto antId: ants)
                 {
-                    coloniesState.vAnts[antId].alive = false;
+                    coloniesState.antDied(antId);
                     CUSTOM_LOG(antId, ";");
                 }
                 CUSTOM_LOG_ENDL;
                 CUSTOM_LOG("COLONY ", colonyNameStr, " DESTROYED");
                 CUSTOM_LOG_ENDL;
-                coloniesState.aliveAnts -= ants.size();
             }
         }
     }
 
 
-    static void antsMove(const Graph<graphType, nodeType>& colonyMap, ColoniesState<nodeType>& coloniesState, RandomGenerator& randomGenerator)
+    static void antsMove(const Graph<graphType, nodeType>& colonyMap, ColoniesState<coloniesStateType, nodeType>& coloniesState, RandomGenerator& randomGenerator)
     {
-        auto aliveAnts = coloniesState.vAnts | std::ranges::views::filter([](Ant<nodeType>& ant){
-                return ant.alive;
-        });
+        auto aliveAnts = coloniesState.liveAntsVector();
 
         std::vector<ColonyIdType> vPotentialColonies;
         // Reserve capacity to prevent allocations.
@@ -175,7 +160,7 @@ class Simulation
                     {
                         vPotentialColonies.push_back(adjColony->colonyName);
                     }
-                    else
+                    else if (adjColony != nullptr)
                     {
                         adjColony = nullptr;
                     }
@@ -217,7 +202,7 @@ class Simulation
     }
 
 
-    static void simulateInner(Graph<graphType, nodeType>& colonyMap, ColoniesState<nodeType>& coloniesState, RandomGenerator& randomGenerator)
+    static void simulateInner(Graph<graphType, nodeType>& colonyMap, ColoniesState<coloniesStateType, nodeType>& coloniesState, RandomGenerator& randomGenerator)
     {
         static constexpr uint32_t NUM_STEPS = 10'000;
         for (int step = 0; step < NUM_STEPS && coloniesState.aliveAnts > 0; step++)

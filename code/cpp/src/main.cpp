@@ -1,11 +1,11 @@
-#include "simulate.h"
+#include "simulation.h"
 
-template <GraphType graphType, NodeType nodeType>
+template <GraphType graphType, ColoniesStateType coloniesStateType, NodeType nodeType>
 void evaluateExperiment(uint32_t seed, uint32_t numAnts,
         const std::string& colonyFileName)
 {
     uint32_t numRepetitions = 100;
-    Simulation<graphType, nodeType> simulation(numAnts, seed);
+    Simulation<graphType, coloniesStateType, nodeType> simulation(numAnts, seed);
 
     simulation.loadColonyMap(colonyFileName);
     simulation.initializeAnts();
@@ -65,25 +65,30 @@ int main(int argc, char* argv[])
     switch (optimizationLevel)
     {
         case 0:
-        evaluateExperiment<GraphType::GraphAdjacencyListMapNameNode, NodeType::NodeNaive>(seed, numAnts, colonyFileName);
+        evaluateExperiment<GraphType::GraphAdjacencyListMapNameNode, ColoniesStateType::AntsVector, NodeType::NodeNaive>(seed, numAnts, colonyFileName);
             break;
         case 1:
-        evaluateExperiment<GraphType::GraphAdjacencyListMapNameNode, NodeType::NodeOptAdjEdges>(seed, numAnts, colonyFileName);
+        evaluateExperiment<GraphType::GraphAdjacencyListMapNameNode, ColoniesStateType::AntsVector, NodeType::NodeOptAdjEdges>(seed, numAnts, colonyFileName);
             break;
         case 2:
-        evaluateExperiment<GraphType::GraphAdjacencyListMapNameNode, NodeType::NodeOptAdjEdgesNameRemoved>(seed, numAnts, colonyFileName);
+        evaluateExperiment<GraphType::GraphAdjacencyListMapNameNode, ColoniesStateType::AntsVector, NodeType::NodeOptAdjEdgesNameRemoved>(seed, numAnts, colonyFileName);
             break;
         case 3:
-        evaluateExperiment<GraphType::GraphAdjacencyListVectorNameNode, NodeType::NodeOptColonyNamesInts>(seed, numAnts, colonyFileName);
+        evaluateExperiment<GraphType::GraphAdjacencyListVectorNameNode, ColoniesStateType::AntsVector, NodeType::NodeOptColonyNamesInts>(seed, numAnts, colonyFileName);
         break;
         case 4:
-        evaluateExperiment<GraphType::GraphAdjacencyListVectorNameNode, NodeType::NodeOptColonyNamesIntsAligned>(seed, numAnts, colonyFileName);
+        evaluateExperiment<GraphType::GraphAdjacencyListVectorNameNode, ColoniesStateType::AntsVector, NodeType::NodeOptColonyNamesIntsAligned>(seed, numAnts, colonyFileName);
         break;
         case 5:
-        evaluateExperiment<GraphType::GraphAdjacencyListMapNameNodeOpt, NodeType::NodeOptColonyNamesInts>(seed, numAnts, colonyFileName);
+        evaluateExperiment<GraphType::GraphAdjacencyListMapNameNodeOpt, ColoniesStateType::AntsVector, NodeType::NodeOptColonyNamesInts>(seed, numAnts, colonyFileName);
         break;
         case 6:
-        evaluateExperiment<GraphType::GraphAdjacencyListMapNameNodeOpt, NodeType::NodeOptColonyNamesIntsAligned>(seed, numAnts, colonyFileName);
+        evaluateExperiment<GraphType::GraphAdjacencyListMapNameNodeOpt, ColoniesStateType::AntsVector, NodeType::NodeOptColonyNamesIntsAligned>(seed, numAnts, colonyFileName);
+        break;
+        case 7:
+        evaluateExperiment<GraphType::GraphAdjacencyListMapNameNodeOpt, ColoniesStateType::AntsUnorderedMap, NodeType::NodeOptColonyNamesIntsAligned>(seed, numAnts, colonyFileName);
+        case 8:
+        evaluateExperiment<GraphType::GraphAdjacencyListVectorNameNode, ColoniesStateType::AntsUnorderedMap, NodeType::NodeOptColonyNamesInts>(seed, numAnts, colonyFileName);
         break;
         default:
             std::cerr << "Invalid optimization level: " << optimizationLevel << "\n";
