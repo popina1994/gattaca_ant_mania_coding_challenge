@@ -69,7 +69,7 @@ class Simulation
         }
         for (const auto& [colonyName, ants]: htAntPos)
         {
-            if (ants.size() > 1)
+            if (ants.size() > 1) [[unlikely]]
             {
                 std::string_view colonyNameStr;
                 if constexpr (FlatNodeType<nodeType>)
@@ -102,12 +102,12 @@ class Simulation
                 return ant.alive;
         });
 
+        std::vector<ColonyIdType> vPotentialColonies;
+        // Reserve capacity to prevent allocations.
+        vPotentialColonies.reserve(GlobalConsts::MAX_NUM_DIRS);
         for (auto& ant: aliveAnts)
         {
-            // Reserve capacity to prevent allocations.
-            std::vector<ColonyIdType> vPotentialColonies;
-            vPotentialColonies.reserve(GlobalConsts::MAX_NUM_DIRS);
-
+            vPotentialColonies.clear();
             if constexpr (nodeType == NodeType::NodeNaive || nodeType == NodeType::NodeOptAdjEdges)
             {
                 // htAdj doesn't have an order for keys, while
