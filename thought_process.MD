@@ -73,7 +73,7 @@ Node
 }
 ```
 
-5. Optimization 3, use cache align each of the nodes to not cause overlaps??
+5. Optimization 3, use cache align each of the nodes to not cause cache trashing.
 6. Optimization 4, try to see what is happening if we remove nodes corresponding to destroyed colonies. So, when deeper thinking about this optimization, the goal is to access how fast the colonies would be destroyed depending on the number of ants and then use right data structure.
 
 ### Data structure to simulate ants
@@ -111,8 +111,8 @@ We do not count towards simulation latency the time to load and initialize the g
 The biggest bottleneck will be on simulating ant movements and collision detection.
 
 ## Profiling
-The following approaches for further microoptimizations:
--memory allocation/deallocation (reuse the pool)
--branching??
+I used AMD profiled to see further microoptimizations
+-memory allocation/deallocation reuse the pool
+-branching (a little bit)
 -caching
 

@@ -12,18 +12,14 @@ enum class  GraphType
 template<GraphType graphType>
 concept GraphNamesMap = graphType == GraphType::GraphAdjacencyListMapNameNode;
 
-
 template<GraphType graphType>
 concept GraphNamesVector = (graphType == GraphType::GraphAdjacencyListVectorNameNode) || (graphType == GraphType::GraphAdjacencyListMapNameNodeOpt);
-
 
 template<GraphType graphType>
 concept GraphAdjacencyList = graphType == GraphType::GraphAdjacencyListMapNameNode || graphType == GraphType::GraphAdjacencyListMapNameNodeOpt;
 
 template<GraphType graphType>
 concept GraphAdjacencyListOpt = graphType == GraphType::GraphAdjacencyListVectorNameNode;
-
-
 
 template<GraphType graphType, NodeType nodeType>
 struct Graph;
@@ -33,6 +29,7 @@ template<NodeType nodeType>
 requires NonFlatNodeType<nodeType>
 struct Graph<GraphType::GraphAdjacencyListMapNameNode, nodeType>
 {
+    using ColonyIdType = std::string;
     static constexpr uint32_t MAX_NUM_DIRS = GlobalConsts::MAX_NUM_DIRS;
 
     static constexpr GraphType selfGraphType =
@@ -111,6 +108,11 @@ struct Graph<GraphType::GraphAdjacencyListMapNameNode, nodeType>
         return htNodes.size();
     }
 
+    void colonyDeath(const ColonyIdType& colonyName)
+    {
+        htNodes[colonyName]->colonyAlive = false;
+    }
+
     ~Graph()
     {
         for (auto [nodeName, node]: htNodes)
@@ -125,6 +127,7 @@ template<NodeType nodeType>
 requires FlatNodeType<nodeType>
 struct Graph<GraphType::GraphAdjacencyListMapNameNodeOpt, nodeType>
 {
+    using ColonyIdType = uint32_t;
     static constexpr uint32_t MAX_NUM_DIRS = GlobalConsts::MAX_NUM_DIRS;
 
     static constexpr GraphType selfGraphType =
@@ -180,6 +183,11 @@ struct Graph<GraphType::GraphAdjacencyListMapNameNodeOpt, nodeType>
         return htNodes.size();
     }
 
+    void colonyDeath(const ColonyIdType& colonyName)
+    {
+        htNodes.erase(colonyName);
+    }
+
     ~Graph()
     {
         for (auto [nodeName, node]: htNodes)
@@ -195,6 +203,7 @@ template<NodeType flatNodeType>
 requires FlatNodeType<flatNodeType>
 struct Graph<GraphType::GraphAdjacencyListVectorNameNode, flatNodeType>
 {
+    using ColonyIdType = uint32_t;
     static constexpr GraphType selfGraphType =
     GraphType::GraphAdjacencyListVectorNameNode;
     std::vector<Node<flatNodeType>> vNodes;
@@ -244,6 +253,12 @@ struct Graph<GraphType::GraphAdjacencyListVectorNameNode, flatNodeType>
     {
         return vNodes.size();
     }
+
+    void colonyDeath(const ColonyIdType& colonyName)
+    {
+        vNodes[colonyName].colonyAlive = false;
+    }
+
 
     ~Graph()
     {

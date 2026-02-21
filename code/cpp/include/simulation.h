@@ -71,18 +71,7 @@ class Simulation
                     colonyNameStr = colonyName;
                 }
 
-                if constexpr (GraphAdjacencyListOpt<graphType>)
-                {
-                    colonyMap.vNodes[colonyName].colonyAlive = false;
-                }
-                else if constexpr (graphType == GraphType::GraphAdjacencyListMapNameNode)
-                {
-                    colonyMap.htNodes[colonyName]->colonyAlive = false;
-                }
-                else if constexpr (graphType == GraphType::GraphAdjacencyListMapNameNodeOpt)
-                {
-                    colonyMap.htNodes.erase(colonyName);
-                }
+                colonyMap.colonyDeath(colonyName);
 
                 CUSTOM_LOG("FIGHTING DESTRUCTION: ");
                 for (auto antId: ants)
