@@ -24,7 +24,9 @@ void evaluateExperiment(uint32_t seed, uint32_t numAnts,
                     diff.count(),
                     diff.count() / 1'000'000.0);
 
+
         std::println(std::cout, "Number of alive ants {}", simulation.getLiveAnts());
+        simulation.printState();
     }
 }
 
@@ -86,10 +88,10 @@ int main(int argc, char* argv[])
         evaluateExperiment<GraphType::GraphAdjacencyListMapNameNodeOpt, ColoniesStateType::AntsVector, NodeType::NodeOptColonyNamesIntsAligned>(seed, numAnts, colonyFileName);
         break;
         case 7:
-        evaluateExperiment<GraphType::GraphAdjacencyListMapNameNodeOpt, ColoniesStateType::AntsUnorderedMap, NodeType::NodeOptColonyNamesIntsAligned>(seed, numAnts, colonyFileName);
-        case 8:
         evaluateExperiment<GraphType::GraphAdjacencyListVectorNameNode, ColoniesStateType::AntsUnorderedMap, NodeType::NodeOptColonyNamesInts>(seed, numAnts, colonyFileName);
         break;
+        case 8:
+        evaluateExperiment<GraphType::GraphAdjacencyListMapNameNodeOpt, ColoniesStateType::AntsUnorderedMap, NodeType::NodeOptColonyNamesIntsAligned>(seed, numAnts, colonyFileName);
         default:
             std::cerr << "Invalid optimization level: " << optimizationLevel << "\n";
             return 1;

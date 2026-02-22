@@ -24,21 +24,14 @@ class Simulation
     ColoniesState<coloniesStateType, nodeType>& coloniesState, uint32_t seed)
     {
         std::vector<ColonyIdType> vColonyNames;
-        if constexpr (GraphAdjacencyListOpt<graphType>)
-        {
-            auto keyView = colonyMap.vNodes;
-            for (const auto& node: colonyMap.vNodes)
-            {
-                vColonyNames.push_back(node.colonyName);
-            }
-        }
-        else
-        {
-            auto keyView = colonyMap.htNodes | std::views::keys;
-            vColonyNames.assign(keyView.begin(), keyView.end());
-        }
+        vColonyNames.reserve(colonyMap.getNumColonies());
+        auto colNames = colonyMap.getLiveColonies()
+            | std::views::transform
+            ([](const auto* node)-> const ColonyIdType& {
+                return node->colonyName;
+            });
 
-        int numColonies = vColonyNames.size();
+        std::ranges::copy(colNames, std::back_inserter(vColonyNames));
 
         coloniesState.initializeAnts(vColonyNames, seed);
     }
@@ -73,14 +66,14 @@ class Simulation
 
                 colonyMap.colonyDeath(colonyName);
 
-                CUSTOM_LOG("FIGHTING DESTRUCTION: ");
+                CUSTOM_LOG_NO_SPACE("FIGHTING ANTS DIED: ");
                 for (auto antId: ants)
                 {
                     coloniesState.antDied(antId);
-                    CUSTOM_LOG(antId, ";");
+                    CUSTOM_LOG_NO_SPACE(antId, ";");
                 }
                 CUSTOM_LOG_ENDL;
-                CUSTOM_LOG("COLONY ", colonyNameStr, " DESTROYED");
+                CUSTOM_LOG("COLONY", colonyNameStr, "DESTROYED");
                 CUSTOM_LOG_ENDL;
             }
         }
@@ -110,32 +103,14 @@ class Simulation
 
             if (vPotentialColonies.empty())
             {
-                if constexpr (GraphNamesVector<graphType>)
-                {
-                    CUSTOM_LOG(ant.id, " ISOLATED ", colonyMap.vColonyNames[ant.colonyName]);
-                }
-                else if constexpr (GraphNamesMap<graphType>)
-                {
-                    CUSTOM_LOG(ant.id, " ISOLATED ", ant.colonyName);
-                }
-                CUSTOM_LOG_ENDL
+                CUSTOM_LOG(ant.id, " ISOLATED ", colonyMap.getColonyName(ant.colonyName));
                 continue;
             }
             int nextColonyIdx = randomGenerator.generateDir(vPotentialColonies.size());
             ColonyIdType prevColony = ant.colonyName;
             // Spans instead of copies.
-            std::string_view prevColonyStr;
-            std::string_view curColonyStr;
-            if constexpr (FlatNodeType<nodeType>)
-            {
-                prevColonyStr = colonyMap.vColonyNames[prevColony];
-                curColonyStr = colonyMap.vColonyNames[vPotentialColonies[nextColonyIdx]];
-            }
-            else
-            {
-                prevColonyStr = ant.colonyName;
-                curColonyStr = vPotentialColonies[nextColonyIdx];
-            }
+            const auto& prevColonyStr = colonyMap.getColonyName(prevColony);
+            const auto& curColonyStr = colonyMap.getColonyName(vPotentialColonies[nextColonyIdx]);
             CUSTOM_LOG(ant.id, " MOVED FROM ", prevColonyStr, " TO ", curColonyStr);
             ant.colonyName = vPotentialColonies[nextColonyIdx];
         }
@@ -155,6 +130,31 @@ class Simulation
             CUSTOM_LOG_ENDL;
         }
         collisionHandler(colonyMap, coloniesState);
+    }
+
+    static void printStateInner(Graph<graphType, nodeType>& colonyMap, ColoniesState<coloniesStateType, nodeType>& coloniesState)
+    {
+        CUSTOM_LOG("PRINTING STATE");
+        CUSTOM_LOG_ENDL;
+        CUSTOM_LOG("PRINTING STATE ANTS");
+        CUSTOM_LOG_ENDL;
+        for (const auto& ant: coloniesState.liveAntsVector())
+        {
+            CUSTOM_LOG("ANT", ant.id, "IS IN COLONY", colonyMap.getColonyName(ant.colonyName));
+        }
+
+        CUSTOM_LOG("PRINTING STATE COLONIES");
+        CUSTOM_LOG_ENDL;
+        for (const auto* colony: colonyMap.getLiveColonies())
+        {
+            CUSTOM_LOG_NO_SPACE(colonyMap.getColonyName(*colony));
+            auto adjacentColonies = colonyMap.adjacentColoniesDir(colony->colonyName);
+            for (const auto& [direction, adjColony]: adjacentColonies)
+            {
+                CUSTOM_LOG_NO_SPACE(" ", direction, "=", colonyMap.getColonyName(*adjColony));
+            }
+            CUSTOM_LOG_ENDL;
+        }
     }
 
 
@@ -191,6 +191,11 @@ public:
     uint32_t getLiveAnts()
     {
         return coloniesState.aliveAnts;
+    }
+
+    void printState()
+    {
+        printStateInner(colonyMap, coloniesState);
     }
 };
 

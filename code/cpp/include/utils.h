@@ -32,11 +32,18 @@ void log_internal_clean(Args&&... args) {
     std::cout << std::endl;
 }
 
+template <typename... Args>
+void log_internal_clean_no_space(Args&&... args) {
+    ((std::cout << std::forward<Args>(args)), ...);
+}
+
 #if defined(LOG_ON) && LOG_ON
 #define CUSTOM_LOG(...) log_internal_clean(__VA_ARGS__)
+#define CUSTOM_LOG_NO_SPACE(...) log_internal_clean_no_space(__VA_ARGS__)
 #define CUSTOM_LOG_ENDL std::cout << std::endl;
 #else
 #define CUSTOM_LOG(...)
+#define CUSTOM_LOG_NO_SPACE(...)
 #define CUSTOM_LOG_ENDL
 #endif
 
