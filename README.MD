@@ -5,7 +5,8 @@ We first formalize the problem from [problem description](problem_description.tx
 In the same document, we describe a high level solution to the problem while explaining the limitations of the choices and iteratively keep adding optimizations.
 
 2. Implementation and Testing
-Further, we implement the code in [source code folder](./code/cpp) and add system tests in [test code folder](./tests).
+Further, we implement the code in [source code folder](./code/cpp) (see [program instructions](./code/cpp/README.MD)) and add system tests in [test code folder](./tests).
+The implementation
 
 3. Profiling
-Finally, we profile the code and add microoptimizations, where results of experiments are stored in .
+Finally, we profile the code and add microoptimizations.

@@ -167,7 +167,8 @@ struct Graph<GraphType::GraphAdjacencyListMapNameNode, nodeType>
         }
         else if constexpr (nodeType == NodeType::NodeOptAdjEdgesNameRemoved)
         {
-            return htNodes.at(colonyName)->vAdj | std::views::filter
+            return htNodes.at(colonyName)->vAdj
+            | std::views::filter
             ([](const auto* adjColony)
             {
                 return adjColony != nullptr && adjColony->colonyAlive;
@@ -180,11 +181,14 @@ struct Graph<GraphType::GraphAdjacencyListMapNameNode, nodeType>
         if constexpr (nodeType == NodeType::NodeNaive || nodeType  == NodeType::NodeOptAdjEdges)
         {
             return htNodes.at(colonyName)->htAdj
-            | std::views::transform([](const auto& pair) -> std::pair<std::string_view, const Node<nodeType>*>
+            | std::views::transform
+            ([](const auto& pair)
+            -> std::pair<std::string_view, const Node<nodeType>*>
             {
                 return {std::string_view(pair.first), pair.second};
             })
-            | std::views::filter([](const auto& pair)
+            | std::views::filter
+            ([](const auto& pair)
             {
                 return pair.second != nullptr && pair.second->colonyAlive;
             });
@@ -193,11 +197,14 @@ struct Graph<GraphType::GraphAdjacencyListMapNameNode, nodeType>
         {
             const auto& idxToDir = GraphConsts::idxToDir;
             return std::views::iota(0u, MAX_NUM_DIRS)
-            | std::views::transform([this, colonyName, &idxToDir](uint32_t idx)  -> std::pair<std::string_view, const Node<nodeType>*>
+            | std::views::transform
+            ([this, &colonyName, &idxToDir](uint32_t idx)
+            -> std::pair<std::string_view, const Node<nodeType>*>
             {
                 return {std::string_view(idxToDir.at(idx)), htNodes.at(colonyName)->vAdj[idx]};
             })
-            | std::views::filter([this](const auto& pair)
+            | std::views::filter
+            ([this](const auto& pair)
             {
                 return pair.second != nullptr && this->htNodes.contains(pair.second->colonyName);
             });
@@ -309,11 +316,14 @@ struct Graph<GraphType::GraphAdjacencyListMapNameNodeOpt, nodeType>
     {
         const auto& idxToDir = GraphConsts::idxToDir;
         return std::views::iota(0u, MAX_NUM_DIRS)
-        | std::views::transform([this, colonyName, &idxToDir](uint32_t idx)-> std::pair<std::string_view, const Node<nodeType>*>
+        | std::views::transform
+        ([this, &colonyName, &idxToDir](uint32_t idx)
+        -> std::pair<std::string_view, const Node<nodeType>*>
         {
             return {std::string_view(idxToDir.at(idx)), htNodes.at(colonyName)->vAdj[idx]};
         })
-        | std::views::filter([this](const auto& pair)
+        | std::views::filter([this]
+        (const auto& pair)
         {
             return pair.second != nullptr && this->htNodes.contains(pair.second->colonyName);
         });
@@ -392,7 +402,17 @@ struct Graph<GraphType::GraphAdjacencyListVectorNameNode, flatNodeType>
 
     auto getLiveColonies() const
     {
-        return vNodes | std::views::filter([](const auto& node) { return node.colonyAlive; }) | std::views::transform([](auto& node) { return &node; });
+        return vNodes
+        | std::views::filter
+        ([](const auto& node)
+        {
+            return node.colonyAlive;
+        })
+        | std::views::transform
+        ([](auto& node)
+        {
+            return &node;
+        });
     }
 
     const std::string_view getColonyName(const Node<flatNodeType>& node) const
@@ -419,11 +439,14 @@ struct Graph<GraphType::GraphAdjacencyListVectorNameNode, flatNodeType>
     {
         const auto& idxToDir = GraphConsts::idxToDir;
         return std::views::iota(0u, MAX_NUM_DIRS)
-        | std::views::transform([this, colonyName, &idxToDir](uint32_t idx) -> std::pair<std::string_view, const Node<flatNodeType>*>
+        | std::views::transform
+        ([this, &colonyName, &idxToDir](uint32_t idx)
+        -> std::pair<std::string_view, const Node<flatNodeType>*>
         {
             return {std::string_view(idxToDir.at(idx)), vNodes[colonyName].vAdj[idx]};
         })
-        | std::views::filter([](const auto& pair)
+        | std::views::filter
+        ([](const auto& pair)
         {
             return pair.second != nullptr && pair.second->colonyAlive;
         });

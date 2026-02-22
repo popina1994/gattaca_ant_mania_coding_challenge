@@ -92,6 +92,7 @@ int main(int argc, char* argv[])
         break;
         case 8:
         evaluateExperiment<GraphType::GraphAdjacencyListMapNameNodeOpt, ColoniesStateType::AntsUnorderedMap, NodeType::NodeOptColonyNamesIntsAligned>(seed, numAnts, colonyFileName);
+        break;
         default:
             std::cerr << "Invalid optimization level: " << optimizationLevel << "\n";
             return 1;
