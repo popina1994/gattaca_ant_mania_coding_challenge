@@ -2,6 +2,9 @@ code/cpp/main_session.uprof
 code/cpp/output_dir
 *build*
 *.png
+*results
+*venv
+*out_*
 *.dot
 *.out
 *main

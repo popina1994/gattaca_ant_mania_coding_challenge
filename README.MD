@@ -9,4 +9,5 @@ Further, we implement the code in [source code folder](./code/cpp) (see [program
 The implementation
 
 3. Profiling
-Finally, we profile the code and add microoptimizations.
+Install python requirements.txt and then run reproduciblity through [run_all](./run_all_exp.sh).
+You should get plots similar t [report](optimization_report.pdf).
