@@ -1,14 +1,17 @@
 # Instructions
 
-1. Problem Formalization and Solution
+## Problem Formalization and Solution
+
 We first formalize the problem from [problem description](problem_description.txt) following instructions sent in the email and saved as [instructions](instructions_general.txt). This process is described in [thought process](thought_process.MD).
 In the same document, we describe a high level solution to the problem while explaining the limitations of the choices and iteratively keep adding optimizations.
 
-2. Implementation and Testing
+## Implementation and Testing
+
 Further, we implement the code in [source code folder](./code/cpp) (see [program instructions](./code/cpp/README.MD)) and add system tests in [test code folder](./tests).
 The implementation
 
-3. Profiling
+## Profiling
+
 Install python requirements.txt and then run reproducibility through [run_all](./run_all_exp.sh).
 You should get plots similar to the report [report](optimization_report.pdf).
 We should notice that as expected naive optimization is slower due to overhead in unnecessary unordered_map hash computations, copying thus lower cache locality of the algorithm.
