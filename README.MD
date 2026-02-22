@@ -14,6 +14,8 @@ The implementation
 
 Install python requirements.txt and then run reproducibility through [run_all](./run_all_exp.sh).
 You should get plots similar to the report [report](optimization_report.pdf).
+All the experiments are run on the following machine: AMD Ryzen 9 3900x 12(24)-Core 3.79GHz with 64GiB RAM memory.
+
 We should notice that as expected naive optimization is slower due to overhead in unnecessary unordered_map hash computations, copying thus lower cache locality of the algorithm.
 Keeping adjacent nodes in a vector improves cache locality and reduces unordered_map bottlenecks, which can be seen in results of optimization 1 and optimization 2.
 Optimization 3 removes the overhead of unordered_map calls by storing nodes in a vector.

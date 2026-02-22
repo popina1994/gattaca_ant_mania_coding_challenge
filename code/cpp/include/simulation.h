@@ -54,15 +54,7 @@ class Simulation
         {
             if (ants.size() > 1) [[unlikely]]
             {
-                std::string_view colonyNameStr;
-                if constexpr (GraphNamesVector<graphType>)
-                {
-                    colonyNameStr = colonyMap.vColonyNames[colonyName];
-                }
-                else
-                {
-                    colonyNameStr = colonyName;
-                }
+                const auto& colonyNameStr = colonyMap.getColonyName(colonyName);
 
                 colonyMap.colonyDeath(colonyName);
 

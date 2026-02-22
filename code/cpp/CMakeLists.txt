@@ -16,7 +16,7 @@ ${PROJECT_SOURCE_DIR}/src/*.cxx
 )
 
 add_executable(${PROJECT_NAME} ${PROJECT_SOURCE_DIR}/src/main.cpp ${CPP_SOURCES})
-target_compile_definitions(${PROJECT_NAME} PRIVATE LOG_ON=false)
+target_compile_definitions(${PROJECT_NAME} PRIVATE LOG_ON=true)
 
 target_compile_options(${PROJECT_NAME} PRIVATE -g -O2 -fno-omit-frame-pointer )
 
